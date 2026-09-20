@@ -1,41 +1,105 @@
-ADMIN-EDITABLE MENU (Firebase, free Spark plan)
-================================================
+KITCHEN SITE: customer login + admin (Firebase, free Spark plan)
+================================================================
 Files
-  index.html         customer page (menu is read live from Firestore)
-  admin.html         owner login: add / edit / delete items, In-stock toggle
+  qrcode.js          QR generator (MIT, Kazuhiko Arase) used for the UPI QR
+  index.html         customer page: browse menu, sign in, place order, My orders
+  admin.html         owner page: Orders (with status), Menu (add/edit/sold-out)
   firebase-config.js paste your Firebase config here
-  firestore.rules    security rules (only the owner's email can write)
-  firebase.json      only needed if you deploy with Firebase Hosting
+  firestore.rules    security rules
+  firebase.json      only needed for Firebase Hosting / `firebase deploy`
+
+HOW IT WORKS
+  - Customers browse freely, sign in (Google or email+password) to place an order.
+  - Order is saved to Firestore AND opens WhatsApp to the kitchen (as before).
+  - Customers see "My orders" with live status and "Order again".
+  - Owner sees new orders on /admin.html, changes status, manages the menu.
+  - In CONFIG (index.html) set requireLogin:false to allow guest orders.
 
 ONE-TIME SETUP
 1. console.firebase.google.com > Add project (no billing needed).
-2. Build > Firestore Database > Create database > Production mode.
-   Region: asia-south1 (Mumbai).
-3. Build > Authentication > Get started > enable Email/Password.
-   Users tab > Add user: the owner's email + a strong password.
-   (There is no sign-up screen on purpose - only this user can log in.)
+2. Build > Firestore Database > Create database > Production mode
+   (region asia-south1, Mumbai).
+3. Build > Authentication > Get started > Sign-in method:
+   enable Email/Password AND Google (Google asks for a support email).
 4. Project settings > Your apps > Web (</>) > register app.
    Copy the config values into firebase-config.js.
-5. Firestore > Rules: paste firestore.rules, replace owner@example.com with
-   the owner's login email (lowercase), then Publish.
-6. Authentication > Settings > Authorized domains: add the domain you host on
+5. Authentication > Settings > Authorized domains: add the domain you host on
    (e.g. yourkitchen.pages.dev).
-7. Edit CONFIG in index.html: whatsapp, upiId, kitchen name, blocks/fees, slots.
-   (Menu items now come from the admin page, not CONFIG.)
+6. Firestore > Rules: paste firestore.rules and Publish.
+7. Edit CONFIG in index.html (kitchen name, blocks/fees, slots).
 8. Deploy the whole folder (Cloudflare Pages / Netlify / GitHub Pages /
-   Firebase Hosting: `firebase deploy`).
-9. Open https://<your-site>/admin.html, sign in, tap "Import sample menu"
-   (or add items yourself). Customers see changes instantly.
+   Firebase Hosting `firebase deploy`).
+9. MAKE THE OWNER THE ADMIN:
+   a. Open https://<your-site>/admin.html and sign in (Google or email).
+      You will see "Not an admin account" with a long ID.
+   b. Copy that ID into isAdmin() in firestore.rules (replace
+      PASTE_ADMIN_UID_HERE), Publish the rules, reload /admin.html.
+   c. Menu tab > "Import sample menu" (or add your own items).
+   Until step 9 nobody can edit the menu or see orders (safe default).
 
 LOCAL TEST
   python3 -m http.server 8000   then open http://localhost:8000/ and /admin.html
+  (add "localhost" to Authorized domains if it is not already there)
 
-DAILY USE (owner, on phone)
-  Open /admin.html > untick "In stock" for finished items. Done.
+DAILY USE (owner, phone)
+  /admin.html > Orders: change status (New > Confirmed > Out for delivery > Delivered).
+  /admin.html > Menu: untick "In stock" for finished items.
+
+PAYMENT FLOW (prepaid - republish firestore.rules after updating!)
+  1. Customer picks items, fills details.
+  2. Step 1: pays the exact amount (UPI app button, QR or copy UPI ID).
+  3. Step 2: attaches the payment screenshot (+ optional UTR) and taps Place order.
+  4. The order and a small copy of the screenshot are saved; WhatsApp opens with the
+     order text. Admin > Orders shows "View payment screenshot" and the UTR; the cook
+     verifies in her bank/UPI app, then ticks "UPI payment received".
+  Guests / Firebase down: the screenshot cannot be saved, so the customer ticks
+     "I have paid" and sends the screenshot in the WhatsApp chat instead.
+  CONFIG.allowCash: false (default) = UPI only. Set true to also allow cash on delivery.
+  Screenshots are shrunk to small JPEGs and stored in Firestore (collection "proofs").
+  The cook still has to check the money actually arrived; a screenshot can be faked.
+
+NEW IN THE PREVIOUS VERSION
+  Payment received: Orders tab > tick "UPI payment received" / "Cash collected".
+    "Unpaid" filter shows what is still to collect. Customers see Paid / Payment pending.
+  UPI QR: shown with the exact amount under "Pay with UPI app" (also after ordering).
+  Cook sheet tab: pick a delivery date, see what to cook per slot (totals),
+    the delivery list sorted by block/flat with what to collect, Print, and CSV export
+    (this day / all loaded orders; Admin loads the latest 300 orders).
+  Daily limits: Menu tab > item > "Daily limit". The count is per delivery date.
+    Customers see "Only N left" and the item shows Sold out for that day when it hits 0.
+    "Reset sold" (Menu tab) zeroes today's/tomorrow's count. Blank limit = unlimited.
+    Limits only work when customers are signed in (the count is saved with the order).
+    Guest orders / Firebase offline do not count against the limit.
+
+VOICE ALERTS (admin page)
+  Admin > "Voice alerts": tap once to turn on (browsers need a tap), pick English or Tamil,
+  press Test. Then it speaks:
+    - a new order: amount, name, block, flat, slot, and whether a screenshot is attached
+    - "payment received": amount, name, block, flat, order number (when you tick
+      "UPI payment received", on any device that has the admin page open)
+  Keep /admin.html open in the foreground with the screen on (it asks the phone to stay
+  awake). Locked screen / closed tab = no voice. Tamil needs a Tamil voice on the phone.
+  It does NOT know when money reaches the bank: it speaks after you tick "received".
+  For automatic credit alerts use a UPI soundbox on a merchant QR, or a payment gateway.
+
+BROWSER / PHONE SUPPORT
+  Works in current Chrome/Edge/Firefox/Samsung Internet on Android and Safari on iPhone.
+  Needs roughly Chrome 87+ / Safari 14.1+ (2021 or newer); very old phones may look broken.
+  UPI: "Pay with UPI app" opens the UPI app on Android. iPhone Safari often ignores the
+  generic upi:// link, so iPhone customers should use "Copy" (UPI ID) or save the QR.
+  Google sign-in can fail inside in-app browsers; email + password always works.
+  Tested in desktop Chromium with phone-sized screens (320-768 px wide); not on real devices
+  and not in Safari/WebKit.
 
 NOTES
-- Until firebase-config.js is filled in, the site falls back to CONFIG.menu.
-- If Firestore is unreachable for 6 seconds, customers also see CONFIG.menu.
-- Optional hardening: Google Cloud console > APIs & Services > Credentials >
-  restrict the browser API key to your site's domain.
-- Free-tier reads (50k/day) comfortably cover an apartment complex.
+- Guests / Firebase down: menu falls back to CONFIG.menu and ordering stays open
+  through WhatsApp only.
+- Google sign-in can fail inside some in-app browsers; customers can use email+password.
+- A signed-in customer could in theory bump a stock counter by placing junk orders; the
+  rules tie every counter change to a real order of theirs, and you can cancel it and
+  use "Reset sold".
+- Prices in a saved order come from the customer's browser. The WhatsApp message and
+  admin order list show the same numbers; check totals against your menu.
+- Optional: restrict the browser API key to your domain (Google Cloud console >
+  APIs & Services > Credentials).
+- Free-tier limits (50k reads/day) are plenty for an apartment complex.

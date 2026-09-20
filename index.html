@@ -70,7 +70,7 @@ h2{font-family:var(--display);font-size:1.6rem;margin:22px 0 8px}
 .totals .grand{font-weight:800;font-size:1.15rem;border-top:2px solid var(--ink);margin-top:6px;padding-top:8px}
 .empty{color:var(--muted);margin:0 0 12px}
 label{display:block;font-weight:700;font-size:.92rem;margin:12px 0 4px}
-input[type=text],input[type=tel],select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+input[type=text],input[type=tel],input[type=email],input[type=password],select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
 input:focus,select:focus,textarea:focus{border-color:var(--leaf)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pay{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}
@@ -95,7 +95,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--leaf)}
 @media (max-width:859px){
   .cart{position:fixed;left:0;right:0;bottom:0;z-index:40;max-height:88vh;overflow:auto;border-radius:18px 18px 0 0;transform:translateY(105%);transition:transform .25s;visibility:hidden}
   .cart.open{transform:none;visibility:visible}
-  .cart-close{display:block;float:right;background:none;border:0;font-size:1.6rem;cursor:pointer;line-height:1}
+  .cart-close{display:block;float:right;background:none;border:0;font-size:1.8rem;cursor:pointer;line-height:1;min-width:44px;min-height:44px}
 }
 @media (min-width:860px){
   .layout{grid-template-columns:1fr 380px;align-items:start}
@@ -105,6 +105,32 @@ input:focus,select:focus,textarea:focus{border-color:var(--leaf)}
 }
 footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+/* accounts */
+.acct{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:.92rem;color:#DCE8DD}
+.acct button{background:transparent;border:1.5px solid #DCE8DD;color:#fff;border-radius:999px;padding:9px 16px;min-height:44px;font-weight:700;cursor:pointer}
+.acct button:hover{background:rgba(255,255,255,.15)}
+.loginp{margin-top:6px}
+.loginp p{margin:0}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:#fff;width:100%;max-width:460px;max-height:90vh;overflow:auto;border-radius:18px 18px 0 0;padding:20px 20px 24px;position:relative}
+.sheet h2{margin-top:0}
+.sheet .x{position:absolute;right:6px;top:4px;background:none;border:0;font-size:1.9rem;cursor:pointer;line-height:1;min-width:44px;min-height:44px}
+@media (min-width:600px){.modal{align-items:center}.sheet{border-radius:var(--radius)}}
+.gbtn{width:100%}
+.or{text-align:center;color:var(--muted);margin:10px 0 0}
+.ord{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+.badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.8rem;font-weight:700;background:#E9F2EA;color:var(--leaf-deep)}
+.badge.new{background:#FFF3CC;color:#5A4400}
+.badge.cancelled{background:#F3D9D3;color:#5A1A0D}
+.link{color:var(--leaf-deep);font-weight:700}
+.left{color:var(--chilli);font-weight:700;font-size:.85rem;margin-left:8px}
+.qrbox{margin-top:8px}
+.qrbox summary{cursor:pointer;font-weight:700;color:var(--leaf-deep)}
+.qrbox svg{width:190px;height:190px;display:block;margin:8px 0;border:1px solid var(--line);border-radius:8px}
+.proofprev{max-width:130px;max-height:170px;border:1px solid var(--line);border-radius:8px;display:block;margin:8px 0}
+.chkrow{display:flex;gap:8px;align-items:flex-start;font-weight:600;margin-top:10px}
+.chkrow input{width:20px;height:20px;margin-top:2px;flex:none}
+#proof{width:100%;margin-top:6px}
 </style>
 </head>
 <body>
@@ -113,6 +139,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
 
 <header class="hero">
   <div class="hero-in">
+    <div class="acct" id="acct" hidden></div>
     <h1 id="kName"></h1>
     <p id="kTag"></p>
     <span class="status" id="status"></span>
@@ -129,6 +156,7 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
     <button class="cart-close" id="cartClose" aria-label="Close cart">×</button>
     <h2>Your order</h2>
     <div id="cartBody"></div>
+    <p class="err" id="stockNote" role="alert"></p>
 
     <form id="form" novalidate>
       <label for="name">Your name</label>
@@ -155,28 +183,46 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
       <select id="slot"></select>
       <p class="err" id="e-slot"></p>
 
-      <label>Payment</label>
-      <div class="pay">
-        <label><input type="radio" name="pay" value="Cash on delivery" checked> Cash</label>
-        <label><input type="radio" name="pay" value="UPI"> UPI</label>
+      <div id="payChoice">
+        <label>Payment</label>
+        <div class="pay">
+          <label><input type="radio" name="pay" value="Cash on delivery"> Cash</label>
+          <label><input type="radio" name="pay" value="UPI" checked> UPI</label>
+        </div>
       </div>
-      <div class="upi" id="upiBox" hidden>
-        Pay to <code id="upiId"></code>
+      <div class="upi" id="upiBox">
+        <b>Step 1 · Pay <span id="payAmt"></span></b> to <code id="upiId"></code>
         <button type="button" class="btn ghost" id="copyUpi" style="padding:4px 10px;margin-left:6px">Copy</button>
         <div style="margin-top:8px"><a class="btn ghost" id="upiPay" href="#">Pay with UPI app</a></div>
-        <div class="note" style="margin-top:6px">Send the payment screenshot on WhatsApp after placing the order.</div>
+        <details class="qrbox"><summary>Show QR code</summary><div id="upiQr"></div><div class="note">Scan with any UPI app. The amount is filled in.</div></details>
+        <b style="display:block;margin-top:14px">Step 2 · Attach the payment screenshot</b>
+        <div id="proofRow">
+          <input type="file" id="proof" accept="image/*">
+          <img id="proofPrev" class="proofprev" alt="Payment screenshot preview" hidden>
+          <p class="err" id="e-proof"></p>
+        </div>
+        <label class="chkrow" id="paidRow" hidden><input type="checkbox" id="paidChk"><span>I have paid <span id="paidAmt"></span>. I will send the screenshot in the WhatsApp chat.</span></label>
+        <p class="err" id="e-paid"></p>
+        <label for="utr" style="margin-top:10px">UTR / transaction ID (optional)</label>
+        <input type="text" id="utr" maxlength="22" placeholder="e.g. 12-digit UTR from your UPI app" autocomplete="off">
+        <p class="err" id="e-utr"></p>
       </div>
 
       <label for="note">Note for the cook (optional)</label>
       <textarea id="note" rows="2" placeholder="Less spicy, no onion…"></textarea>
 
-      <button type="submit" class="btn go" id="place">Place order on WhatsApp</button>
-      <p class="note">Your order opens in WhatsApp. It is confirmed when the kitchen replies.</p>
+      <button type="submit" class="btn go" id="place">Place order</button>
+      <p class="note">Pay first, then place the order. It opens in WhatsApp and is confirmed once the kitchen verifies your payment.</p>
     </form>
+
+    <div class="loginp" id="loginPrompt" hidden>
+      <p class="note" style="margin:0 0 4px">Sign in to place your order. It takes a few seconds and saves your address for next time.</p>
+      <button type="button" class="btn go" id="loginPromptBtn">Sign in / Create account</button>
+    </div>
 
     <div class="done" id="done" hidden>
       <h3>Order sent to WhatsApp</h3>
-      <p style="margin:0 0 8px">Tap Send in WhatsApp to finish. If it did not open, use the button below.</p>
+      <p style="margin:0 0 8px" id="doneMsg">Tap Send in WhatsApp to finish. If it did not open, use the button below.</p>
       <a class="btn ghost" id="waAgain" href="#" target="_blank" rel="noopener">Open WhatsApp</a>
     </div>
   </aside>
@@ -187,8 +233,36 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
 </button>
 <div class="backdrop" id="backdrop" hidden></div>
 
+<div class="modal" id="authModal" hidden role="dialog" aria-modal="true" aria-labelledby="authTitle">
+  <div class="sheet">
+    <button type="button" class="x" data-close aria-label="Close">×</button>
+    <h2 id="authTitle">Sign in</h2>
+    <button type="button" class="btn ghost gbtn" id="gBtn">Continue with Google</button>
+    <p class="or">or use email</p>
+    <form id="authForm" novalidate>
+      <div id="nameRow" hidden><label for="an">Your name</label><input type="text" id="an" autocomplete="name"></div>
+      <label for="ae">Email</label>
+      <input type="email" id="ae" autocomplete="username">
+      <label for="ap">Password</label>
+      <input type="password" id="ap" autocomplete="current-password">
+      <p class="err" id="authErr"></p>
+      <button type="submit" class="btn go" id="authBtn">Sign in</button>
+    </form>
+    <p class="note"><a href="#" class="link" id="authSwitch">New here? Create an account</a> · <a href="#" class="link" id="authReset">Forgot password?</a></p>
+  </div>
+</div>
+
+<div class="modal" id="ordersModal" hidden role="dialog" aria-modal="true" aria-labelledby="ordTitle">
+  <div class="sheet">
+    <button type="button" class="x" data-close aria-label="Close">×</button>
+    <h2 id="ordTitle">My orders</h2>
+    <div id="ordersBody"></div>
+  </div>
+</div>
+
 <footer id="foot"></footer>
 
+<script src="qrcode.js"></script>
 <script src="firebase-config.js"></script>
 <script>
 /* =====================================================
@@ -197,8 +271,10 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
 const CONFIG = {
   kitchen: "Amma's Kitchen",
   tagline: "Fresh home-cooked food, made in small batches and delivered inside our apartment complex.",
-  whatsapp: "919999999999",          // country code + number, no + or spaces
+  whatsapp: "919894596364",          // country code + number, no + or spaces
   upiId: "trgthirumal-2@okaxis",
+  allowCash: false,                  // false = customers pay by UPI first, then attach the screenshot; true = cash on delivery also allowed
+  requireLogin: true,                // customers must sign in to place an order (needs Firebase; set false to allow guest orders)
   minOrder: 80,                      // ₹
   freeDeliveryAbove: 300,            // ₹ (set 0 to disable)
   apartments: [                      // fee = delivery charge in ₹ for that block
@@ -233,6 +309,8 @@ const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } cat
 
 let cart = load(KEY.cart, {});
 let byId = {};
+let user = null, fbReady = false, menuShown = false;
+let stockSold = {}, lastDate = null;
 
 /* ---------- header ---------- */
 document.title = CONFIG.kitchen + " – Home food delivered in your apartment";
@@ -242,11 +320,12 @@ $("#foot").textContent = CONFIG.kitchen + " · Home kitchen · Orders confirmed 
 $("#facts").innerHTML =
   `<span>Minimum order <b>${rs(CONFIG.minOrder)}</b></span>` +
   (CONFIG.freeDeliveryAbove ? `<span>Free delivery above <b>${rs(CONFIG.freeDeliveryAbove)}</b></span>` : "") +
-  `<span>Pay by <b>cash or UPI</b></span>`;
+  (CONFIG.allowCash ? `<span>Pay by <b>cash or UPI</b></span>` : `<span>Pay by <b>UPI</b> before you order</span>`);
 
 /* ---------- menu ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function applyMenu(items) {
+  menuShown = true;
   byId = Object.fromEntries(items.map(m => [m.id, m]));
   Object.keys(cart).forEach(id => { if (!byId[id] || !byId[id].available) delete cart[id]; });
   save(KEY.cart, cart);
@@ -259,7 +338,7 @@ function applyMenu(items) {
       <div>
         <h3><span class="dot ${m.veg ? "" : "nv"}" role="img" aria-label="${m.veg ? "Vegetarian" : "Non-vegetarian"}"></span>${esc(m.name)}</h3>
         <p>${esc(m.desc)}</p>
-        <span class="price">${rs(m.price)}</span>
+        <span class="price">${rs(m.price)}</span><span class="left"></span>
       </div>
       <div class="act">
         ${m.available ? `
@@ -268,26 +347,54 @@ function applyMenu(items) {
             <button data-act="dec" aria-label="Remove one ${esc(m.name)}">−</button>
             <span aria-live="polite">0</span>
             <button data-act="inc" aria-label="Add one ${esc(m.name)}">+</button>
-          </div>` : `<span class="tag-sold">Sold out</span>`}
+          </div>
+          <span class="tag-sold stockout" hidden>Sold out</span>` : `<span class="tag-sold">Sold out</span>`}
       </div>
     </article>`).join("")}
   </section>`).join("");
+  enforceStock();
   Object.keys(byId).forEach(syncItem);
   renderCart();
 }
 
+/* ---------- daily stock limits (count is per delivery date) ---------- */
+const limitOf = id => { const l = byId[id] && byId[id].limit; return Number.isFinite(l) && l > 0 ? l : Infinity; };
+function leftFor(id, date) {
+  const l = limitOf(id); if (!Number.isFinite(l)) return Infinity;
+  return Math.max(0, l - (((stockSold[date || selDate()]) || {})[id] || 0));
+}
+const maxQty = id => Math.min(10, leftFor(id));
+function enforceStock() {
+  let cut = false;
+  Object.keys(cart).forEach(id => {
+    const mx = maxQty(id);
+    if (cart[id] > mx) { cut = true; if (mx > 0) cart[id] = mx; else delete cart[id]; }
+  });
+  if (cut) save(KEY.cart, cart);
+  const n = $("#stockNote"); if (n && cut) n.textContent = "Some quantities were reduced because stock is limited for that day.";
+}
+function stockRefresh() { if (!menuShown) return; enforceStock(); Object.keys(byId).forEach(syncItem); renderCart(); }
+window.setStock = m => { stockSold = m || {}; stockRefresh(); };
+
 function syncItem(id) {
   const el = document.querySelector(`.item[data-id="${id}"]`);
-  if (!el || !el.querySelector(".add")) return;
-  const q = cart[id] || 0;
-  el.querySelector(".add").hidden = q > 0;
-  el.querySelector(".step").hidden = q === 0;
+  if (!el || !byId[id] || !el.querySelector(".add")) return;
+  const q = cart[id] || 0, left = leftFor(id), out = left === 0;
+  el.classList.toggle("sold", out);
+  el.querySelector(".add").hidden = out || q > 0;
+  el.querySelector(".step").hidden = out || q === 0;
   el.querySelector(".step span").textContent = q;
+  el.querySelector('[data-act="inc"]').disabled = q >= maxQty(id);
+  const so = el.querySelector(".stockout");
+  so.hidden = !out;
+  so.textContent = "Sold out for " + (selDate() === dayKey(0) ? "today" : "tomorrow");
+  el.querySelector(".left").textContent = !out && Number.isFinite(left) && left <= 5 ? `Only ${left} left` : "";
 }
 function change(id, d) {
-  const q = Math.max(0, Math.min(10, (cart[id] || 0) + d));
+  const q = Math.max(0, Math.min(maxQty(id), (cart[id] || 0) + d));
   if (q) cart[id] = q; else delete cart[id];
   save(KEY.cart, cart);
+  $("#stockNote").textContent = "";
   syncItem(id);
   renderCart();
 }
@@ -301,21 +408,24 @@ $("#menu").addEventListener("click", e => {
 
 /* ---------- slots ---------- */
 const istNow = () => new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+function dayKey(d) { const x = istNow(); x.setDate(x.getDate() + d); return x.getFullYear() + "-" + String(x.getMonth() + 1).padStart(2, "0") + "-" + String(x.getDate()).padStart(2, "0"); }
 function buildSlots() {
   const now = istNow(), out = [];
   [0, 1].forEach(d => CONFIG.slots.forEach(s => {
     const [h, m] = s.cutoff.split(":").map(Number);
     const cut = istNow(); cut.setDate(cut.getDate() + d); cut.setHours(h, m, 0, 0);
-    if (cut > now) out.push({ label: (d ? "Tomorrow" : "Today") + " · " + s.label, cutoff: cut, day: d, name: s.label.split(" ")[0] });
+    if (cut > now) out.push({ label: (d ? "Tomorrow" : "Today") + " · " + s.label, cutoff: cut, day: d, date: dayKey(d), name: s.label.split(" ")[0] });
   }));
   return out;
 }
 let slots = [];
+function selDate() { const x = slots.find(o => o.label === $("#slot").value) || slots[0]; return x ? x.date : dayKey(0); }
 function refreshSlots() {
   slots = buildSlots();
   const sel = $("#slot"), prev = sel.value;
   sel.innerHTML = slots.map(s => `<option value="${s.label}">${s.label}</option>`).join("");
   if (slots.some(s => s.label === prev)) sel.value = prev;
+  const sd = selDate(); if (lastDate !== null && sd !== lastDate) { lastDate = sd; stockRefresh(); } lastDate = sd;
   const st = $("#status"), first = slots[0];
   if (first && first.day === 0) {
     st.className = "status";
@@ -326,6 +436,7 @@ function refreshSlots() {
   }
 }
 refreshSlots(); setInterval(refreshSlots, 60000);
+$("#slot").addEventListener("change", () => { lastDate = selDate(); stockRefresh(); });
 
 /* ---------- apartments ---------- */
 $("#apt").innerHTML = CONFIG.apartments.map((a, i) => `<option value="${i}">${a.name}</option>`).join("");
@@ -349,7 +460,7 @@ function renderCart() {
   } else {
     html = `<ul class="lines">${ids.map(id => `
       <li><span class="nm">${esc(byId[id].name)}</span>
-        <span class="step"><button type="button" data-act="dec" data-id="${id}" aria-label="Remove one ${esc(byId[id].name)}">−</button><span>${cart[id]}</span><button type="button" data-act="inc" data-id="${id}" aria-label="Add one ${esc(byId[id].name)}">+</button></span>
+        <span class="step"><button type="button" data-act="dec" data-id="${id}" aria-label="Remove one ${esc(byId[id].name)}">−</button><span>${cart[id]}</span><button type="button" data-act="inc" data-id="${id}" ${cart[id] >= maxQty(id) ? "disabled" : ""} aria-label="Add one ${esc(byId[id].name)}">+</button></span>
         <span class="price" style="min-width:52px;text-align:right">${rs(byId[id].price * cart[id])}</span></li>`).join("")}</ul>
       <div class="totals">
         <div><span>Items</span><span>${rs(t.sub)}</span></div>
@@ -358,7 +469,8 @@ function renderCart() {
       </div>`;
   }
   $("#cartBody").innerHTML = html;
-  $("#form").hidden = !ids.length;
+  $("#form").hidden = !ids.length || needLogin();
+  $("#loginPrompt").hidden = !ids.length || !needLogin();
   if (ids.length) $("#done").hidden = true;
   $("#bar").hidden = !ids.length || window.innerWidth >= 860;
   $("#barText").textContent = `${n} item${n === 1 ? "" : "s"} · ${rs(t.total)}`;
@@ -369,7 +481,7 @@ $("#cartBody").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.id === "repeat") {
     const last = load(KEY.last, {});
-    Object.entries(last).forEach(([id, q]) => { if (byId[id] && byId[id].available) cart[id] = q; });
+    Object.entries(last).forEach(([id, q]) => { if (byId[id] && byId[id].available && maxQty(id) > 0) cart[id] = Math.min(q, maxQty(id)); });
     save(KEY.cart, cart); Object.keys(byId).forEach(syncItem); renderCart(); return;
   }
   if (b.dataset.act) change(b.dataset.id, b.dataset.act === "dec" ? -1 : 1);
@@ -385,16 +497,56 @@ window.addEventListener("resize", renderCart);
 
 /* ---------- payment ---------- */
 function payMode() { return document.querySelector('input[name="pay"]:checked').value; }
+const enc = t => encodeURIComponent(t).replace(/'/g, "%27");
+const upiLink = amt => `upi://pay?pa=${enc(CONFIG.upiId)}&pn=${enc(CONFIG.kitchen)}&am=${amt}&cu=INR&tn=${enc("Food order")}`;
+function qrSvg(text) {
+  try { const q = window.qrcode(0, "M"); q.addData(text); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); }
+  catch (x) { return ""; }
+}
 function updateUpi() {
-  const on = payMode() === "UPI";
+  const on = payMode() === "UPI", total = totals().total, link = upiLink(total), store = !!(window.FB && user);
   $("#upiBox").hidden = !on;
   $("#upiId").textContent = CONFIG.upiId;
-  $("#upiPay").href = `upi://pay?pa=${encodeURIComponent(CONFIG.upiId)}&pn=${encodeURIComponent(CONFIG.kitchen)}&am=${totals().total}&cu=INR&tn=${encodeURIComponent("Food order")}`;
+  $("#payAmt").textContent = rs(total); $("#paidAmt").textContent = rs(total);
+  $("#proofRow").hidden = !store; $("#paidRow").hidden = store;
+  $("#upiPay").href = link;
+  $("#upiQr").innerHTML = on && total > 0 ? qrSvg(link) : "";
 }
+/* payment screenshot: shrink to a small JPEG so it can be saved with the order */
+function compressImage(file) {
+  const tries = [[1400, 0.7], [1100, 0.55], [900, 0.5]];
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      for (const [max, q] of tries) {
+        const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        const out = c.toDataURL("image/jpeg", q);
+        if (out.length <= 600000) return res(out);
+      }
+      rej(new Error("too big"));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("bad image")); };
+    img.src = url;
+  });
+}
+let proofData = null;
 document.querySelectorAll('input[name="pay"]').forEach(r => r.addEventListener("change", updateUpi));
 $("#copyUpi").addEventListener("click", async e => {
   try { await navigator.clipboard.writeText(CONFIG.upiId); e.target.textContent = "Copied"; setTimeout(() => e.target.textContent = "Copy", 1500); } catch (x) {}
 });
+
+$("#proof").addEventListener("change", async e => {
+  const f = e.target.files && e.target.files[0];
+  proofData = null; $("#proofPrev").hidden = true; setErr("proof", "");
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { setErr("proof", "Choose an image (your payment screenshot)."); e.target.value = ""; return; }
+  try { proofData = await compressImage(f); $("#proofPrev").src = proofData; $("#proofPrev").hidden = false; }
+  catch (x) { setErr("proof", "Could not read that image. Try another screenshot."); e.target.value = ""; }
+});
+if (!CONFIG.allowCash) { document.querySelector('input[name="pay"][value="UPI"]').checked = true; $("#payChoice").hidden = true; }
 
 /* ---------- profile (remember customer) ---------- */
 const prof = load(KEY.prof, {});
@@ -405,50 +557,224 @@ if (prof.flat) $("#flat").value = prof.flat;
 
 /* ---------- submit ---------- */
 function setErr(id, msg) { $("#e-" + id).textContent = msg || ""; return !msg; }
-$("#form").addEventListener("submit", e => {
+$("#form").addEventListener("submit", async e => {
   e.preventDefault();
+  if (needLogin()) { openAuth("in"); return; }
   if (CONFIG.whatsapp === "919999999999" || !/^\d{11,15}$/.test(CONFIG.whatsapp)) { alert("Setup incomplete: set a valid WhatsApp number in CONFIG (e.g. 919876543210)."); return; }
   if (payMode() === "UPI" && /yourname@/.test(CONFIG.upiId)) { alert("Setup incomplete: set your real UPI ID in CONFIG."); return; }
   const t = totals();
   const name = $("#name").value.trim(), phone = $("#phone").value.trim(), flat = $("#flat").value.trim();
+  const pay = payMode(), store = !!(window.FB && user), utr = $("#utr").value.trim();
   let ok = true;
   ok = setErr("name", name ? "" : "Enter your name.") && ok;
   ok = setErr("phone", /^[6-9]\d{9}$/.test(phone) ? "" : "Enter a valid 10-digit mobile number.") && ok;
   ok = setErr("flat", flat ? "" : "Enter your flat number.") && ok;
   ok = setErr("slot", slots.length ? "" : "No delivery slot available right now.") && ok;
+  if (pay === "UPI") {
+    if (store) ok = setErr("proof", proofData ? "" : "Pay first, then attach your payment screenshot.") && ok;
+    else ok = setErr("paid", $("#paidChk").checked ? "" : "Pay first, then tick this box.") && ok;
+    ok = setErr("utr", !utr || /^[A-Za-z0-9]{8,22}$/.test(utr) ? "" : "That ID looks wrong. Copy it from your UPI app or leave it blank.") && ok;
+  } else { setErr("proof", ""); setErr("paid", ""); setErr("utr", ""); }
   if (t.sub < CONFIG.minOrder) { alert(`Minimum order is ${rs(CONFIG.minOrder)}. Add ${rs(CONFIG.minOrder - t.sub)} more.`); return; }
   if (!ok) return;
 
   const apt = CONFIG.apartments[+$("#apt").value];
   const id = String(Date.now()).slice(-5);
+  const slot = $("#slot").value, date = selDate();
+  const items = Object.entries(cart).map(([i, q]) => ({ id: i, name: byId[i].name, price: byId[i].price, qty: q }));
+  const need = items.filter(i => Number.isFinite(limitOf(i.id))).map(i => ({ id: i.id, name: i.name, qty: i.qty, limit: limitOf(i.id) }));
   const lines = Object.entries(cart).map(([i, q]) => `${q} × ${byId[i].name} = ${rs(byId[i].price * q)}`).join("\n");
   const note = $("#note").value.trim();
-  const msg =
+  const buildMsg = withProof =>
 `*New order – ${CONFIG.kitchen}*
 Order #${id}
 
 Name: ${name}
 Phone: ${phone}
 Address: ${apt.name}, Flat ${flat}
-Delivery: ${$("#slot").value}
+Delivery: ${slot}
 
 ${lines}
 
 Items: ${rs(t.sub)}
 Delivery: ${t.fee ? rs(t.fee) : "Free"}
 *Total: ${rs(t.total)}*
-Payment: ${payMode()}${note ? "\nNote: " + note : ""}`;
+Payment: ${pay === "UPI" ? `UPI, paid ${rs(t.total)}${utr ? "\nUTR: " + utr : ""}\nScreenshot: ${withProof ? "uploaded on the website" : "sending in this chat now"}` : pay}${note ? "\nNote: " + note : ""}`;
 
   save(KEY.prof, { name, phone, apt: +$("#apt").value, flat });
   save(KEY.last, cart);
-  const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(msg)}`;
+
+  /* save the order (+ screenshot, + limited-stock count) when signed in; WhatsApp still goes out if saving fails */
+  const btn = $("#place"); btn.disabled = true;
+  const proof = pay === "UPI" ? proofData : null;
+  let saved = false;
+  if (window.FB && user) {
+    try {
+      await Promise.race([
+        window.FB.saveOrder({ orderNo: id, name, phone, block: apt.name, flat, slot, slotDate: date, items, subtotal: t.sub, fee: t.fee, total: t.total, pay, paid: false, utr, hasProof: !!proof, note, status: "new" }, need, date, proof),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000))
+      ]);
+      saved = true;
+      window.FB.saveProfile(user.uid, { name, phone, block: apt.name, flat }).catch(() => {});
+    } catch (x) {
+      if (x && x.code === "stock") {
+        btn.disabled = false;
+        (stockSold[date] = stockSold[date] || {})[x.id] = Math.max(0, x.limit - x.left);
+        alert(`Sorry, only ${x.left} left of ${x.item} for that day. Your cart has been updated.`);
+        stockRefresh();
+        return;
+      }
+    }
+  }
+  btn.disabled = false;
+
+  const withProof = saved && !!proof;
+  const url = `https://wa.me/${CONFIG.whatsapp}?text=${encodeURIComponent(buildMsg(withProof))}`;
   $("#waAgain").href = url;
+  $("#doneMsg").textContent = (pay !== "UPI" ? "Tap Send in WhatsApp to finish."
+    : withProof ? "Your order and payment screenshot are saved. Tap Send in WhatsApp to notify the kitchen."
+    : "Tap Send in WhatsApp, then attach your payment screenshot in the chat and send it.") + " If WhatsApp did not open, use the button below.";
   cart = {}; save(KEY.cart, cart);
+  proofData = null; $("#proof").value = ""; $("#proofPrev").hidden = true; $("#utr").value = ""; $("#paidChk").checked = false;
   Object.keys(byId).forEach(syncItem);
   renderCart();
   $("#form").hidden = true;
   $("#done").hidden = false;
   window.location.href = url;
+});
+
+/* ---------- customer accounts (Firebase Auth) ---------- */
+const STATUS = { new: "Received", confirmed: "Confirmed", out: "Out for delivery", delivered: "Delivered", cancelled: "Cancelled" };
+function needLogin() { return !!(CONFIG.requireLogin && fbReady && !user); }
+let ordersUnsub = null, myOrders = [], authMode = "in";
+
+function showModal(id, on) {
+  $("#" + id).hidden = !on;
+  document.body.style.overflow = document.querySelector(".modal:not([hidden])") ? "hidden" : "";
+  if (id === "ordersModal" && !on && ordersUnsub) { ordersUnsub(); ordersUnsub = null; }
+}
+document.querySelectorAll(".modal").forEach(m => m.addEventListener("click", e => {
+  if (e.target === m || e.target.closest("[data-close]")) showModal(m.id, false);
+}));
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.querySelectorAll(".modal:not([hidden])").forEach(m => showModal(m.id, false));
+});
+
+function renderAcct() {
+  const a = $("#acct");
+  if (!fbReady) { a.hidden = true; return; }
+  a.hidden = false;
+  a.innerHTML = user
+    ? `<span>Hi, ${esc((user.displayName || user.email || "there").split(/[ @]/)[0])}</span><button type="button" id="myOrdersBtn">My orders</button><button type="button" id="signOutBtn">Sign out</button>`
+    : `<button type="button" id="signInBtn">Sign in</button>`;
+}
+$("#acct").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "signInBtn") openAuth("in");
+  if (b.id === "myOrdersBtn") openOrders();
+  if (b.id === "signOutBtn") {
+    try { localStorage.removeItem(KEY.prof); localStorage.removeItem(KEY.last); } catch (x) {}
+    ["#name", "#phone", "#flat"].forEach(q => $(q).value = "");
+    window.FB.signOut();
+  }
+});
+$("#loginPromptBtn").addEventListener("click", () => openAuth("in"));
+
+function setAuthMode(m) {
+  authMode = m;
+  $("#authTitle").textContent = m === "up" ? "Create account" : "Sign in";
+  $("#authBtn").textContent = m === "up" ? "Create account" : "Sign in";
+  $("#nameRow").hidden = m !== "up";
+  $("#ap").setAttribute("autocomplete", m === "up" ? "new-password" : "current-password");
+  $("#authSwitch").textContent = m === "up" ? "Have an account? Sign in" : "New here? Create an account";
+}
+function openAuth(mode) { setAuthMode(mode); $("#authErr").textContent = ""; showModal("authModal", true); $("#ae").focus(); }
+$("#authSwitch").addEventListener("click", e => { e.preventDefault(); setAuthMode(authMode === "up" ? "in" : "up"); });
+
+const authMsg = c => ({
+  "auth/invalid-credential": "Wrong email or password.",
+  "auth/wrong-password": "Wrong email or password.",
+  "auth/user-not-found": "Wrong email or password.",
+  "auth/email-already-in-use": "An account with this email already exists. Sign in instead.",
+  "auth/weak-password": "Password must be at least 6 characters.",
+  "auth/invalid-email": "Enter a valid email address.",
+  "auth/too-many-requests": "Too many attempts. Try again in a few minutes.",
+  "auth/network-request-failed": "No internet connection.",
+  "auth/unauthorized-domain": "This website's domain is not authorized in Firebase yet (see SETUP.txt).",
+  "auth/operation-not-allowed": "This sign-in method is not enabled yet.",
+  "auth/popup-blocked": "Popup blocked. Allow popups, or use email and password."
+}[c] || "Could not sign in. Try email and password instead.");
+
+$("#authForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const email = $("#ae").value.trim(), pw = $("#ap").value, nm = $("#an").value.trim();
+  if (!email || !pw) { $("#authErr").textContent = "Enter email and password."; return; }
+  if (authMode === "up" && !nm) { $("#authErr").textContent = "Enter your name."; return; }
+  $("#authBtn").disabled = true; $("#authErr").textContent = "";
+  try {
+    if (authMode === "up") { await window.FB.signUp(email, pw, nm); if (!$("#name").value) $("#name").value = nm; renderAcct(); }
+    else await window.FB.signIn(email, pw);
+    $("#ap").value = ""; showModal("authModal", false);
+  } catch (x) { $("#authErr").textContent = authMsg(x.code); }
+  $("#authBtn").disabled = false;
+});
+$("#gBtn").addEventListener("click", async () => {
+  $("#authErr").textContent = "";
+  try { await window.FB.google(); showModal("authModal", false); }
+  catch (x) { if (!/popup-closed|cancelled-popup/.test(x.code || "")) $("#authErr").textContent = authMsg(x.code); }
+});
+$("#authReset").addEventListener("click", async e => {
+  e.preventDefault();
+  const email = $("#ae").value.trim();
+  if (!email) { $("#authErr").textContent = "Enter your email above first."; return; }
+  try { await window.FB.reset(email); $("#authErr").textContent = "If an account exists, a reset link has been emailed."; }
+  catch (x) { $("#authErr").textContent = authMsg(x.code); }
+});
+
+function fillProfile(p) {
+  if (p.name && !$("#name").value) $("#name").value = p.name;
+  if (p.phone && !$("#phone").value) $("#phone").value = p.phone;
+  if (p.flat && !$("#flat").value) $("#flat").value = p.flat;
+  const i = CONFIG.apartments.findIndex(a => a.name === p.block);
+  if (i >= 0 && prof.apt == null) $("#apt").value = i;
+}
+window.onAuth = async u => {
+  user = u; fbReady = true;
+  renderAcct();
+  if (menuShown) renderCart();
+  if (!u) return;
+  showModal("authModal", false);
+  let p = null;
+  try { p = await window.FB.loadProfile(u.uid); } catch (x) {}
+  fillProfile(p || { name: u.displayName || "" });
+  if (menuShown) renderCart();
+};
+
+function openOrders() {
+  showModal("ordersModal", true);
+  $("#ordersBody").innerHTML = '<p class="empty">Loading…</p>';
+  if (ordersUnsub) ordersUnsub();
+  ordersUnsub = window.FB.watchMyOrders(user.uid, list => { myOrders = list; renderOrders(); },
+    () => { $("#ordersBody").innerHTML = '<p class="err">Could not load your orders.</p>'; });
+}
+function renderOrders() {
+  if (!myOrders.length) { $("#ordersBody").innerHTML = '<p class="empty">No orders yet.</p>'; return; }
+  $("#ordersBody").innerHTML = myOrders.slice(0, 15).map(o => `
+    <div class="ord">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><b>#${esc(o.orderNo)}</b><span><span class="badge ${esc(o.status)}">${esc(STATUS[o.status] || o.status)}</span> ${o.paid ? '<span class="badge">Paid</span>' : (o.pay === "UPI" && o.status !== "cancelled" ? '<span class="badge new">Payment pending</span>' : "")}</span></div>
+      <div class="note" style="margin:2px 0 6px">${esc(o.when)} · ${esc(o.slot)}</div>
+      <div>${(o.items || []).map(i => `${esc(i.qty)} × ${esc(i.name)}`).join(", ")}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><b>${rs(o.total)}</b><button type="button" class="btn ghost" data-reorder="${esc(o.id)}" style="padding:6px 14px">Order again</button></div>
+    </div>`).join("");
+}
+$("#ordersBody").addEventListener("click", e => {
+  const b = e.target.closest("[data-reorder]"); if (!b) return;
+  const o = myOrders.find(x => x.id === b.dataset.reorder); if (!o) return;
+  cart = {}; let skipped = 0;
+  (o.items || []).forEach(i => { if (byId[i.id] && byId[i.id].available && maxQty(i.id) > 0) cart[i.id] = Math.min(maxQty(i.id), i.qty); else skipped++; });
+  save(KEY.cart, cart); Object.keys(byId).forEach(syncItem); renderCart(); showModal("ordersModal", false);
+  if (window.innerWidth < 860 && Object.keys(cart).length) openCart(true);
+  if (skipped) alert("Some items are no longer available and were skipped.");
 });
 
 /* ---------- menu source: Firestore (admin-editable) or CONFIG.menu fallback ---------- */
@@ -467,20 +793,79 @@ if (window.__fbOn) {
 </script>
 <script type="module">
 if (window.__fbOn) {
+  const V = "10.12.2", base = `https://www.gstatic.com/firebasejs/${V}/`;
+  let app, db, F;
+  /* 1) live menu */
   try {
-    const V = "10.12.2", base = `https://www.gstatic.com/firebasejs/${V}/`;
     const { initializeApp } = await import(base + "firebase-app.js");
-    const { getFirestore, collection, onSnapshot } = await import(base + "firebase-firestore.js");
-    const db = getFirestore(initializeApp(window.FIREBASE_CONFIG));
-    onSnapshot(collection(db, "menu"), snap => {
+    F = await import(base + "firebase-firestore.js");
+    app = initializeApp(window.FIREBASE_CONFIG);
+    db = F.getFirestore(app);
+    F.onSnapshot(F.collection(db, "menu"), snap => {
       const items = snap.docs.map(d => {
         const x = d.data();
-        return { id: d.id, cat: x.cat || "Menu", name: x.name || "", desc: x.desc || "", price: Number(x.price) || 0, veg: x.veg !== false, available: x.available === true, order: Number(x.order) || 0 };
+        return { id: d.id, cat: x.cat || "Menu", name: x.name || "", desc: x.desc || "", price: Number(x.price) || 0, veg: x.veg !== false, available: x.available === true, order: Number(x.order) || 0, limit: Number(x.limit) > 0 ? Number(x.limit) : undefined };
       });
       items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
       window.setMenuFromServer(items);
     }, () => window.menuFallback());
+    F.onSnapshot(F.query(F.collection(db, "stock"), F.where("date", "in", [window.dayKey(0), window.dayKey(1)])), snap => {
+      const m = {};
+      snap.docs.forEach(d => { const x = d.data(); (m[x.date] = m[x.date] || {})[x.item] = Number(x.sold) || 0; });
+      window.setStock(m);
+    }, () => {});
   } catch (e) { window.menuFallback(); }
+  /* 2) customer login + orders (if this fails, ordering stays open via WhatsApp) */
+  try {
+    if (!db) throw new Error("no db");
+    const A = await import(base + "firebase-auth.js");
+    const auth = A.getAuth(app);
+    window.FB = {
+      signIn: (e, p) => A.signInWithEmailAndPassword(auth, e, p),
+      signUp: async (e, p, n) => {
+        const c = await A.createUserWithEmailAndPassword(auth, e, p);
+        try { await A.updateProfile(c.user, { displayName: n }); } catch (x) {}
+        return c;
+      },
+      google: () => A.signInWithPopup(auth, new A.GoogleAuthProvider()),
+      reset: e => A.sendPasswordResetEmail(auth, e),
+      signOut: () => A.signOut(auth),
+      saveOrder: async (o, need, date, proof) => {
+        const uid = auth.currentUser.uid, ref = F.doc(F.collection(db, "orders")), data = { ...o, uid, createdAt: F.serverTimestamp() };
+        const pref = proof ? F.doc(db, "proofs", ref.id) : null;
+        const pdata = proof ? { uid, orderNo: o.orderNo, img: proof, createdAt: F.serverTimestamp() } : null;
+        if (!need || !need.length) {
+          const b = F.writeBatch(db); b.set(ref, data); if (pref) b.set(pref, pdata);
+          await b.commit(); return;
+        }
+        await F.runTransaction(db, async tx => {
+          const refs = need.map(n => F.doc(db, "stock", date + "_" + n.id));
+          const snaps = await Promise.all(refs.map(r => tx.get(r)));
+          snaps.forEach((sn, k) => {
+            const sold = sn.exists() ? Number(sn.data().sold) || 0 : 0, n = need[k];
+            if (sold + n.qty > n.limit) throw Object.assign(new Error("stock"), { code: "stock", id: n.id, item: n.name, limit: n.limit, left: Math.max(0, n.limit - sold) });
+          });
+          snaps.forEach((sn, k) => {
+            const sold = sn.exists() ? Number(sn.data().sold) || 0 : 0;
+            tx.set(refs[k], { date, item: need[k].id, sold: sold + need[k].qty, lastOrder: ref.id, lastUid: uid });
+          });
+          tx.set(ref, data);
+          if (pref) tx.set(pref, pdata);
+        });
+      },
+      loadProfile: async uid => { const s = await F.getDoc(F.doc(db, "users", uid)); return s.exists() ? s.data() : null; },
+      saveProfile: (uid, p) => F.setDoc(F.doc(db, "users", uid), p),
+      watchMyOrders: (uid, cb, err) => F.onSnapshot(F.query(F.collection(db, "orders"), F.where("uid", "==", uid)), snap => {
+        const list = snap.docs.map(d => {
+          const x = d.data(), ms = x.createdAt && x.createdAt.toMillis ? x.createdAt.toMillis() : Date.now();
+          return { id: d.id, ...x, ms, when: new Date(ms).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) };
+        });
+        list.sort((a, b) => b.ms - a.ms);
+        cb(list);
+      }, err)
+    };
+    A.onAuthStateChanged(auth, u => window.onAuth(u));
+  } catch (e) { /* login unavailable */ }
 }
 </script>
 </body>

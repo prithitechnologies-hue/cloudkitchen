@@ -17,7 +17,7 @@ h2{font-size:1.15rem;margin:22px 0 8px;color:var(--leaf-deep)}
 .top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .who{color:var(--muted);font-size:.9rem}
 label{display:block;font-weight:700;font-size:.9rem;margin:12px 0 4px}
-input[type=text],input[type=email],input[type=password],input[type=number],select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:#fff}
 input:focus,select:focus{outline:none;border-color:var(--leaf)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 button{font:inherit;cursor:pointer;border-radius:10px;border:1.5px solid var(--leaf);background:transparent;color:var(--leaf-deep);padding:9px 14px;font-weight:700}
@@ -27,6 +27,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
 .msg{position:sticky;top:8px;z-index:5;margin-top:12px;padding:10px 14px;border-radius:10px;font-weight:600;background:#E9F2EA;border:1px solid #B9D3BD}
 .msg.err{background:#F8DDD7;border-color:#E3A99C;color:#5A1A0D}
+.tabs{display:flex;gap:8px;margin-top:14px}
+.tabs button{flex:1;padding:11px}
+.tabs button.on,.chips button.on{background:var(--leaf);color:#fff}
+.chips{display:flex;gap:8px;margin-top:14px}
+.chips button{padding:6px 16px;border-radius:999px}
 .item{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)}
 .item:last-child{border-bottom:0}
 .item b{display:block}
@@ -40,6 +45,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .off b,.off small{opacity:.5}
 .muted{color:var(--muted)}
 .err-t{color:var(--chilli);font-size:.9rem;min-height:1.2em;margin:8px 0 0}
+.or{text-align:center;color:var(--muted);margin:12px 0 0}
+.ord.isnew{border-left:6px solid var(--turmeric)}
+.ord ul{margin:6px 0;padding-left:20px}
+.ord .hd{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.badge{display:inline-block;border-radius:999px;padding:2px 10px;font-size:.8rem;font-weight:700;background:#E9F2EA;color:var(--leaf-deep)}
+.badge.new{background:#FFF3CC;color:#5A4400}.badge.cancelled{background:#F3D9D3;color:#5A1A0D}
+a{color:var(--leaf-deep);font-weight:700}
+code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
+.cook{width:100%;border-collapse:collapse}
+.cook th,.cook td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+.cook td:last-child,.cook th:last-child{text-align:right;font-weight:700}
+.deliv{margin:6px 0 0;padding-left:22px}
+.deliv li{margin-bottom:8px}
+.sum{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-weight:700}
+@media print{body{background:#fff}.top,.msg,.tabs,.noprint,.chips{display:none!important}.card{border:0;padding:0;margin-top:8px}main{max-width:none;padding:0}}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -53,6 +73,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <section id="login" class="card" hidden>
   <h1>Kitchen admin</h1>
+  <button type="button" class="pri" id="gBtn" style="width:100%;margin-top:14px">Continue with Google</button>
+  <p class="or">or use email</p>
   <form id="loginForm">
     <label for="em">Email</label>
     <input type="email" id="em" autocomplete="username" required>
@@ -63,45 +85,94 @@ button:disabled{opacity:.5;cursor:not-allowed}
   </form>
 </section>
 
+<section id="denied" class="card" hidden>
+  <h1>Not an admin account</h1>
+  <p>This account can't manage the kitchen yet. To make it the admin, put this ID in <code>firestore.rules</code> (in <code>isAdmin()</code>) and publish the rules, then reload:</p>
+  <p><code id="uid"></code></p>
+  <div class="actions"><button type="button" id="deniedOut">Sign out</button></div>
+</section>
+
 <section id="panel" hidden>
   <div class="top">
-    <div><h1>Menu admin</h1><div class="who" id="who"></div></div>
+    <div><h1>Kitchen admin</h1><div class="who" id="who"></div></div>
     <div class="actions" style="margin:0">
-      <a href="index.html" style="align-self:center;font-weight:700;color:var(--leaf-deep)">View site</a>
+      <a href="index.html" style="align-self:center;display:inline-block;padding:10px 6px">View site</a>
       <button type="button" id="out">Sign out</button>
     </div>
   </div>
 
   <div class="msg" id="msg" hidden></div>
 
-  <form id="itemForm" class="card" novalidate>
-    <h2 id="formTitle" style="margin-top:0">Add item</h2>
-    <input type="hidden" id="iid">
-    <label for="cat">Category</label>
-    <input type="text" id="cat" list="cats" placeholder="e.g. Meals, Tiffin, Sweets" maxlength="30">
-    <datalist id="cats"></datalist>
-    <label for="nm">Name</label>
-    <input type="text" id="nm" maxlength="80">
-    <label for="ds">Description</label>
-    <input type="text" id="ds" maxlength="200" placeholder="What's in it">
-    <div class="grid">
-      <div><label for="pr">Price (₹)</label><input type="number" id="pr" min="0" max="10000" step="1" inputmode="numeric"></div>
-      <div><label for="vg">Type</label><select id="vg"><option value="1">Veg</option><option value="0">Non-veg</option></select></div>
-    </div>
-    <label class="stock" style="margin-top:14px"><input type="checkbox" id="av" checked> In stock</label>
-    <p class="err-t" id="formErr"></p>
-    <div class="actions">
-      <button class="pri" type="submit" id="saveBtn">Save item</button>
-      <button type="button" id="cancelEdit" hidden>Cancel edit</button>
-    </div>
-  </form>
-
-  <div id="seed" class="card" hidden>
-    <p style="margin-top:0">No items in the database yet. Site is showing the default menu from <code>index.html</code>.</p>
-    <button type="button" class="pri" id="seedBtn">Import sample menu</button>
+  <div class="card noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <button type="button" id="voiceBtn">🔊 Voice alerts: Off</button>
+    <select id="voiceLang" style="width:auto" aria-label="Voice language"><option value="en">English</option><option value="ta">தமிழ்</option></select>
+    <button type="button" id="voiceTest">Test</button>
+    <span class="muted" id="voiceNote" style="flex:1 1 100%;font-size:.9rem">Speaks new orders and "payment received". Tap once to turn on, and keep this page open with the screen on.</span>
   </div>
 
-  <div id="list"></div>
+  <div class="tabs">
+    <button type="button" data-tab="orders" class="on">Orders<span id="newCount"></span></button>
+    <button type="button" data-tab="cook">Cook sheet</button>
+    <button type="button" data-tab="menu">Menu</button>
+  </div>
+
+  <!-- ORDERS -->
+  <div id="tabOrders">
+    <div class="chips">
+      <button type="button" data-f="active" class="on">Active</button>
+      <button type="button" data-f="unpaid">Unpaid</button>
+      <button type="button" data-f="all">All</button>
+    </div>
+    <div id="ordersList"></div>
+  </div>
+
+  <!-- COOK SHEET -->
+  <div id="tabCook" hidden>
+    <div class="card noprint">
+      <label for="cookDate" style="margin-top:0">Delivery date</label>
+      <input type="date" id="cookDate">
+      <div class="actions">
+        <button type="button" id="cookPrint">Print</button>
+        <button type="button" id="cookCsv">Export this day (CSV)</button>
+        <button type="button" id="cookCsvAll">Export all loaded (CSV)</button>
+      </div>
+    </div>
+    <div id="cookOut"></div>
+  </div>
+
+  <!-- MENU -->
+  <div id="tabMenu" hidden>
+    <form id="itemForm" class="card" novalidate>
+      <h2 id="formTitle" style="margin-top:0">Add item</h2>
+      <input type="hidden" id="iid">
+      <label for="cat">Category</label>
+      <input type="text" id="cat" list="cats" placeholder="e.g. Meals, Tiffin, Sweets" maxlength="30">
+      <datalist id="cats"></datalist>
+      <label for="nm">Name</label>
+      <input type="text" id="nm" maxlength="80">
+      <label for="ds">Description</label>
+      <input type="text" id="ds" maxlength="200" placeholder="What's in it">
+      <div class="grid">
+        <div><label for="pr">Price (₹)</label><input type="number" id="pr" min="0" max="10000" step="1" inputmode="numeric"></div>
+        <div><label for="vg">Type</label><select id="vg"><option value="1">Veg</option><option value="0">Non-veg</option></select></div>
+      </div>
+      <label for="lim">Daily limit (blank = unlimited)</label>
+      <input type="number" id="lim" min="1" max="500" step="1" inputmode="numeric" placeholder="e.g. 20">
+      <label class="stock" style="margin-top:14px"><input type="checkbox" id="av" checked> In stock</label>
+      <p class="err-t" id="formErr"></p>
+      <div class="actions">
+        <button class="pri" type="submit" id="saveBtn">Save item</button>
+        <button type="button" id="cancelEdit" hidden>Cancel edit</button>
+      </div>
+    </form>
+
+    <div id="seed" class="card" hidden>
+      <p style="margin-top:0">No items in the database yet. The site is showing the default menu from <code>index.html</code>.</p>
+      <button type="button" class="pri" id="seedBtn">Import sample menu</button>
+    </div>
+
+    <div id="list"></div>
+  </div>
 </section>
 
 </main>
@@ -112,6 +183,8 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const cfg = window.FIREBASE_CONFIG;
 
+const STATUSES = [["new", "New"], ["confirmed", "Confirmed"], ["out", "Out for delivery"], ["delivered", "Delivered"], ["cancelled", "Cancelled"]];
+const ACTIVE = ["new", "confirmed", "out"];
 const SAMPLE = [
   ["Meals","Veg meals","Rice, sambar, rasam, 2 poriyal, kootu, curd, pickle",100,true],
   ["Meals","Chicken biryani","Seeraga samba rice, raita, boiled egg",160,false],
@@ -131,44 +204,231 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
   const [{ initializeApp }, A, F] = await Promise.all([
     import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")
   ]);
-  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } = A;
-  const { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, writeBatch } = F;
+  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } = A;
+  const { getFirestore, collection, query, orderBy, limit, where, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } = F;
   const app = initializeApp(cfg), auth = getAuth(app), db = getFirestore(app);
 
-  let items = [], unsub = null, msgTimer;
+  let items = [], orders = [], stock = {}, filter = "active", unsubMenu = null, unsubOrders = null, unsubStock = null, msgTimer, seen = null;
 
   const flash = (t, err) => {
     const m = $("#msg"); m.textContent = t; m.className = "msg" + (err ? " err" : ""); m.hidden = false;
     clearTimeout(msgTimer); msgTimer = setTimeout(() => m.hidden = true, err ? 7000 : 2500);
   };
-  const fail = e => flash(e && e.code === "permission-denied" ? "This account is not allowed to edit the menu." : "Something went wrong. Check your internet and try again.", true);
+  const fail = e => flash(e && e.code === "permission-denied" ? "This account is not allowed to do that." : "Something went wrong. Check your internet and try again.", true);
+  const stop = () => { if (unsubMenu) unsubMenu(); if (unsubOrders) unsubOrders(); if (unsubStock) unsubStock(); unsubMenu = unsubOrders = unsubStock = null; seen = null; };
 
-  /* ---- auth ---- */
+  /* ---- voice alerts (browser text-to-speech) ---- */
+  const voice = { on: false, lang: "en" };
+  try { const v = localStorage.getItem("kitchen_voice_lang"); if (v === "ta" || v === "en") voice.lang = v; } catch (x) {}
+  $("#voiceLang").value = voice.lang;
+  let lock = null;
+  const keepAwake = async on => {
+    try { if (on && "wakeLock" in navigator) lock = await navigator.wakeLock.request("screen"); else if (lock) { await lock.release(); lock = null; } } catch (x) {}
+  };
+  document.addEventListener("visibilitychange", () => { if (voice.on && document.visibilityState === "visible") keepAwake(true); });
+  const hasTamil = () => "speechSynthesis" in window && speechSynthesis.getVoices().some(v => /^ta/i.test(v.lang));
+  function voiceNote() {
+    const n = $("#voiceNote");
+    if (!("speechSynthesis" in window)) n.textContent = "This browser cannot speak. Try Chrome on Android.";
+    else if (voice.lang === "ta" && !hasTamil()) n.textContent = "No Tamil voice found on this phone. Install one in Android Settings > Text-to-speech, or use English.";
+    else n.textContent = voice.on ? "Voice alerts are ON. Keep this page open with the screen on." : "Speaks new orders and \"payment received\". Tap once to turn on, and keep this page open with the screen on.";
+  }
+  if ("speechSynthesis" in window) speechSynthesis.addEventListener("voiceschanged", voiceNote);
+  function speak(text, force) {
+    if ((!voice.on && !force) || !("speechSynthesis" in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = voice.lang === "ta" ? "ta-IN" : "en-IN"; u.rate = 0.95;
+    speechSynthesis.speak(u);
+  }
+  const digits = v => String(v).split("").join(" ");
+  const who = o => `${o.name}, ${o.block}, ${voice.lang === "ta" ? "பிளாட்" : "flat"} ${o.flat}`;
+  const when = o => { const m = /^(Today|Tomorrow)\s*·\s*(\w+)/.exec(o.slot || ""); return m ? `${m[1].toLowerCase()} ${m[2].toLowerCase()}` : ""; };
+  function sayNew(o) {
+    if (voice.lang === "ta") speak(`புதிய ஆர்டர். ${who(o)}. மொத்தம் ${o.total} ரூபாய். ${o.hasProof ? "பணம் செலுத்திய ஸ்கிரீன்ஷாட் உள்ளது. சரிபார்க்கவும்." : (o.pay === "UPI" ? "பணம் இன்னும் உறுதி செய்யப்படவில்லை." : "பணமாக வாங்கவும்.")}`);
+    else speak(`New order. ${o.total} rupees from ${who(o)}${when(o) ? ", for " + when(o) : ""}. ${o.hasProof ? "Payment screenshot attached. Please verify." : (o.pay === "UPI" ? "Payment not confirmed yet." : "Cash on delivery.")}`);
+  }
+  function sayPaid(o) {
+    if (voice.lang === "ta") speak(`பணம் வந்துவிட்டது. ${o.total} ரூபாய். ${who(o)}. ஆர்டர் எண் ${digits(o.orderNo)}.`);
+    else speak(`Payment received. ${o.total} rupees from ${who(o)}. Order ${digits(o.orderNo)}.`);
+  }
+  /* compare each new snapshot with the previous one: new order -> announce; unpaid -> paid -> announce */
+  function announceChanges(list) {
+    if (seen) list.forEach(o => { const p = seen.get(o.id); if (!p) sayNew(o); else if (!p.paid && o.paid) sayPaid(o); });
+    seen = new Map(list.map(o => [o.id, { paid: !!o.paid }]));
+  }
+  $("#voiceBtn").addEventListener("click", () => {
+    voice.on = !voice.on;
+    $("#voiceBtn").textContent = "🔊 Voice alerts: " + (voice.on ? "On" : "Off");
+    if (voice.on) { speak(voice.lang === "ta" ? "குரல் அறிவிப்பு இயக்கப்பட்டது" : "Voice alerts are on."); keepAwake(true); }
+    else { if ("speechSynthesis" in window) speechSynthesis.cancel(); keepAwake(false); }
+    voiceNote();
+  });
+  $("#voiceLang").addEventListener("change", e => {
+    voice.lang = e.target.value; try { localStorage.setItem("kitchen_voice_lang", voice.lang); } catch (x) {}
+    voiceNote();
+  });
+  $("#voiceTest").addEventListener("click", () => { const was = voice.on; voice.on = true; sayPaid({ total: 270, name: "Ravi Kumar", block: "Block A", flat: "304", orderNo: "10001" }); voice.on = was; });
+
+  /* ---- auth + admin check ----
+     Only an admin may list all orders (see firestore.rules), so a successful orders
+     listener doubles as the "is this an admin?" test. */
   onAuthStateChanged(auth, user => {
-    $("#login").hidden = !!user; $("#panel").hidden = !user;
-    if (unsub) { unsub(); unsub = null; }
+    stop();
+    $("#login").hidden = !!user; $("#panel").hidden = true; $("#denied").hidden = true;
+    document.title = "Kitchen admin";
     if (!user) return;
-    $("#who").textContent = user.email;
-    unsub = onSnapshot(collection(db, "menu"), snap => {
-      items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      items.sort((a, b) => (a.order || 0) - (b.order || 0) || String(a.name).localeCompare(String(b.name)));
-      render();
-    }, fail);
+    $("#who").textContent = user.email || "";
+    let first = true;
+    unsubOrders = onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(300)), snap => {
+      orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      announceChanges(orders);
+      if (first) { first = false; $("#panel").hidden = false; $("#cookDate").value = dayKey(0); startMenu(); }
+      renderOrders(); renderCook();
+    }, err => {
+      if (err && err.code === "permission-denied") { $("#uid").textContent = user.uid; $("#denied").hidden = false; }
+      else { $("#login").hidden = true; $("#panel").hidden = false; fail(err); }
+    });
   });
 
+  const authErr = c => c === "auth/too-many-requests" ? "Too many attempts. Wait a few minutes and try again."
+    : c === "auth/unauthorized-domain" ? "This domain is not in Firebase Authorized domains (see SETUP.txt)."
+    : "Wrong email or password.";
   $("#loginForm").addEventListener("submit", async e => {
     e.preventDefault();
     $("#loginErr").textContent = ""; $("#loginBtn").disabled = true;
     try { await signInWithEmailAndPassword(auth, $("#em").value.trim(), $("#pw").value); $("#pw").value = ""; }
-    catch (x) {
-      $("#loginErr").textContent = x.code === "auth/too-many-requests" ? "Too many attempts. Wait a few minutes and try again." : "Wrong email or password.";
-    }
+    catch (x) { $("#loginErr").textContent = authErr(x.code); }
     $("#loginBtn").disabled = false;
   });
-  $("#out").addEventListener("click", () => signOut(auth));
+  $("#gBtn").addEventListener("click", async () => {
+    $("#loginErr").textContent = "";
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    catch (x) { if (!/popup-closed|cancelled-popup/.test(x.code || "")) $("#loginErr").textContent = authErr(x.code); }
+  });
+  $("#out").addEventListener("click", () => { voice.on = false; $("#voiceBtn").textContent = "🔊 Voice alerts: Off"; keepAwake(false); if ("speechSynthesis" in window) speechSynthesis.cancel(); signOut(auth); });
+  $("#deniedOut").addEventListener("click", () => signOut(auth));
 
-  /* ---- list ---- */
-  function render() {
+  /* ---- tabs ---- */
+  document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x === b));
+    $("#tabOrders").hidden = b.dataset.tab !== "orders"; $("#tabCook").hidden = b.dataset.tab !== "cook"; $("#tabMenu").hidden = b.dataset.tab !== "menu";
+  }));
+  document.querySelectorAll(".chips button").forEach(b => b.addEventListener("click", () => {
+    filter = b.dataset.f;
+    document.querySelectorAll(".chips button").forEach(x => x.classList.toggle("on", x === b));
+    renderOrders();
+  }));
+
+  /* ---- orders ---- */
+  const fmt = o => {
+    const d = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate() : null;
+    return d ? d.toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "just now";
+  };
+  function renderOrders() {
+    const list = orders.filter(o => filter === "all" || (filter === "unpaid" ? (o.status !== "cancelled" && !o.paid) : ACTIVE.includes(o.status)));
+    $("#ordersList").innerHTML = list.length ? list.map(o => `
+      <div class="card ord ${o.status === "new" ? "isnew" : ""}" data-id="${esc(o.id)}">
+        <div class="hd"><b>#${esc(o.orderNo)} · ₹${esc(o.total)}</b><span><span class="badge ${esc(o.status)}">${esc((STATUSES.find(s => s[0] === o.status) || [0, o.status])[1])}</span> <span class="badge ${o.paid ? "" : "new"}">${o.paid ? "Paid" : "Unpaid"}</span></span></div>
+        <small class="muted">${esc(fmt(o))} · ${esc(o.slot)}</small>
+        <div style="margin-top:6px"><b>${esc(o.name)}</b> · <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a> · <a href="https://wa.me/91${esc(o.phone)}" target="_blank" rel="noopener">WhatsApp</a></div>
+        <div>${esc(o.block)}, Flat ${esc(o.flat)}</div>
+        <ul>${(o.items || []).map(i => `<li>${esc(i.qty)} × ${esc(i.name)}</li>`).join("")}</ul>
+        <div class="muted">Items ₹${esc(o.subtotal)} + delivery ₹${esc(o.fee)} · ${esc(o.pay)}</div>
+        ${o.note ? `<div>Note: ${esc(o.note)}</div>` : ""}
+        ${o.utr ? `<div>UTR: <b>${esc(o.utr)}</b></div>` : ""}
+        ${o.hasProof ? `<button type="button" data-act="proof" style="margin-top:8px">View payment screenshot</button><div class="proofbox" hidden></div>` : ""}
+        <label class="stock" style="margin-top:12px"><input type="checkbox" data-act="paid" ${o.paid ? "checked" : ""}> ${o.pay === "UPI" ? "UPI payment received" : "Cash collected"}</label>
+        <label style="margin-top:10px">Status</label>
+        <select data-act="status">${STATUSES.map(([v, l]) => `<option value="${v}" ${o.status === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+      </div>`).join("") : `<p class="muted" style="margin-top:14px">No ${filter === "all" ? "" : "active "}orders.</p>`;
+    const n = orders.filter(o => o.status === "new").length;
+    $("#newCount").textContent = n ? ` (${n})` : "";
+    document.title = (n ? `(${n}) ` : "") + "Kitchen admin";
+  }
+  $("#ordersList").addEventListener("click", async e => {
+    const b = e.target.closest('[data-act="proof"]'); if (!b) return;
+    const box = b.nextElementSibling;
+    if (!box.hidden) { box.hidden = true; box.textContent = ""; b.textContent = "View payment screenshot"; return; }
+    b.disabled = true;
+    try {
+      const sn = await getDoc(doc(db, "proofs", b.closest(".ord").dataset.id));
+      const img = sn.exists() ? String(sn.data().img || "") : "";
+      if (/^data:image\/(jpeg|png|webp);base64,/.test(img)) {
+        const im = document.createElement("img"); im.alt = "Payment screenshot"; im.src = img;
+        im.style.cssText = "max-width:100%;max-height:80vh;object-fit:contain;border:1px solid #D9E0D3;border-radius:8px;margin-top:8px";
+        box.textContent = ""; box.appendChild(im);
+      } else box.textContent = "Screenshot not found.";
+      box.hidden = false; b.textContent = "Hide screenshot";
+    } catch (x) { fail(x); }
+    b.disabled = false;
+  });
+  $("#ordersList").addEventListener("change", async e => {
+    const el = e.target.closest('[data-act="status"],[data-act="paid"]'); if (!el) return;
+    const ref = doc(db, "orders", el.closest(".ord").dataset.id), paidTog = el.dataset.act === "paid";
+    try { await updateDoc(ref, paidTog ? { paid: el.checked } : { status: el.value }); flash(paidTog ? (el.checked ? "Marked paid" : "Marked unpaid") : "Status updated"); }
+    catch (x) { fail(x); renderOrders(); }
+  });
+
+  /* ---- cook sheet ---- */
+  const ymd = d => d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const dayKey = k => ymd(new Date(Date.now() + k * 86400000));
+  const dateOf = o => o.slotDate || (o.createdAt && o.createdAt.toDate ? ymd(o.createdAt.toDate()) : "");
+  const slotGroup = o => { const p = String(o.slot || "").split(" · "); return p.length > 1 ? p.slice(1).join(" · ") : (o.slot || "Slot"); };
+  const byAddr = (a, b) => String(a.block).localeCompare(String(b.block)) || String(a.flat).localeCompare(String(b.flat), undefined, { numeric: true });
+  const payText = o => o.paid ? "✓ Paid" : (o.pay === "UPI" ? (o.hasProof ? "Screenshot attached, verify" : "UPI not received") : "Collect ₹" + o.total + " cash");
+  const short = o => (o.items || []).map(i => i.qty + "×" + i.name).join(", ");
+
+  function renderCook() {
+    const day = $("#cookDate").value || dayKey(0);
+    const all = orders.filter(o => dateOf(o) === day), live = all.filter(o => o.status !== "cancelled");
+    const total = live.reduce((t, o) => t + (Number(o.total) || 0), 0);
+    const paid = live.reduce((t, o) => t + (o.paid ? Number(o.total) || 0 : 0), 0);
+    const groups = [...new Set(live.map(slotGroup))].sort();
+    let html = `<div class="sum"><span>Orders: ${live.length}</span><span>Total: ₹${total}</span><span>Received: ₹${paid}</span><span>To collect: ₹${total - paid}</span>${all.length !== live.length ? `<span class="muted">(${all.length - live.length} cancelled)</span>` : ""}</div>`;
+    html += groups.length ? groups.map(g => {
+      const os = live.filter(o => slotGroup(o) === g).sort(byAddr), tot = {};
+      os.forEach(o => (o.items || []).forEach(i => { const t = tot[i.id] || (tot[i.id] = { name: i.name, qty: 0 }); t.qty += Number(i.qty) || 0; }));
+      const rows = Object.values(tot).sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name));
+      return `<div class="card"><h2 style="margin-top:0">${esc(g)} · ${os.length} order${os.length === 1 ? "" : "s"}</h2>
+        <table class="cook"><thead><tr><th>To cook</th><th>Qty</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.name)}</td><td>${r.qty}</td></tr>`).join("")}</tbody></table>
+        <h3 style="margin:14px 0 0">Deliveries</h3>
+        <ol class="deliv">${os.map(o => `<li><b>${esc(o.block)} · ${esc(o.flat)}</b> — ${esc(o.name)} <a href="tel:${esc(o.phone)}">${esc(o.phone)}</a><br>${esc(short(o))} — <b>${esc(payText(o))}</b>${o.note ? `<br><span class="muted">Note: ${esc(o.note)}</span>` : ""}</li>`).join("")}</ol></div>`;
+    }).join("") : `<p class="muted" style="margin-top:14px">No orders for this date.</p>`;
+    $("#cookOut").innerHTML = html;
+  }
+  $("#cookDate").addEventListener("change", renderCook);
+  $("#cookPrint").addEventListener("click", () => window.print());
+
+  const CSV_COLS = ["Order no", "Delivery date", "Slot", "Name", "Phone", "Block", "Flat", "Items", "Subtotal", "Delivery fee", "Total", "Payment mode", "Paid", "Status", "UTR", "Screenshot", "Note", "Placed at"];
+  const cell = v => { let t = String(v ?? ""); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
+  function exportCsv(list, name) {
+    const rows = [CSV_COLS].concat(list.map(o => [o.orderNo, dateOf(o), o.slot, o.name, o.phone, o.block, o.flat, short(o), o.subtotal, o.fee, o.total, o.pay, o.paid ? "Yes" : "No", o.status, o.utr || "", o.hasProof ? "Yes" : "No", o.note || "", fmt(o)]));
+    const csv = "\ufeff" + rows.map(r => r.map(cell).join(",")).join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  $("#cookCsv").addEventListener("click", () => { const day = $("#cookDate").value || dayKey(0); exportCsv(orders.filter(o => dateOf(o) === day), `orders-${day}.csv`); });
+  $("#cookCsvAll").addEventListener("click", () => exportCsv(orders, "orders-all.csv"));
+
+  /* ---- menu ---- */
+  const soldOn = (id, day) => (stock[day] || {})[id] || 0;
+  const limitInfo = i => i.limit ? `<small style="display:block">Limit ${esc(i.limit)}/day · sold today ${soldOn(i.id, dayKey(0))}, tomorrow ${soldOn(i.id, dayKey(1))}</small>` : "";
+  const hasSold = i => i.limit && (soldOn(i.id, dayKey(0)) || soldOn(i.id, dayKey(1)));
+  function startMenu() {
+    if (unsubMenu) return;
+    unsubStock = onSnapshot(query(collection(db, "stock"), where("date", "in", [dayKey(0), dayKey(1)])), snap => {
+      stock = {};
+      snap.docs.forEach(d => { const x = d.data(); (stock[x.date] = stock[x.date] || {})[x.item] = Number(x.sold) || 0; });
+      renderMenu();
+    }, fail);
+    unsubMenu = onSnapshot(collection(db, "menu"), snap => {
+      items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      items.sort((a, b) => (a.order || 0) - (b.order || 0) || String(a.name).localeCompare(String(b.name)));
+      renderMenu();
+    }, fail);
+  }
+  function renderMenu() {
     const cats = [...new Set(items.map(i => i.cat))];
     $("#cats").innerHTML = cats.map(c => `<option value="${esc(c)}">`).join("");
     $("#seed").hidden = items.length > 0;
@@ -177,34 +437,33 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
       <div class="card" style="margin-top:0">
       ${items.filter(i => i.cat === c).map(i => `
         <div class="item ${i.available ? "" : "off"}" data-id="${esc(i.id)}">
-          <div><b><span class="dot ${i.veg ? "" : "nv"}"></span>${esc(i.name)} · ₹${esc(i.price)}</b><small>${esc(i.desc)}</small></div>
+          <div><b><span class="dot ${i.veg ? "" : "nv"}"></span>${esc(i.name)} · ₹${esc(i.price)}</b><small>${esc(i.desc)}</small>${limitInfo(i)}</div>
           <label class="stock"><input type="checkbox" data-act="stock" ${i.available ? "checked" : ""}> In stock</label>
-          <div class="row2"><span></span><span class="actions" style="margin:0"><button type="button" data-act="edit">Edit</button><button type="button" class="del" data-act="del">Delete</button></span></div>
+          <div class="row2"><span></span><span class="actions" style="margin:0">${hasSold(i) ? '<button type="button" data-act="reset">Reset sold</button>' : ""}<button type="button" data-act="edit">Edit</button><button type="button" class="del" data-act="del">Delete</button></span></div>
         </div>`).join("")}
       </div>`).join("");
   }
-
   $("#list").addEventListener("change", async e => {
     const cb = e.target.closest('[data-act="stock"]'); if (!cb) return;
-    const id = cb.closest(".item").dataset.id;
-    try { await updateDoc(doc(db, "menu", id), { available: cb.checked }); flash(cb.checked ? "Marked in stock" : "Marked sold out"); }
-    catch (x) { fail(x); render(); }
+    try { await updateDoc(doc(db, "menu", cb.closest(".item").dataset.id), { available: cb.checked }); flash(cb.checked ? "Marked in stock" : "Marked sold out"); }
+    catch (x) { fail(x); renderMenu(); }
   });
   $("#list").addEventListener("click", async e => {
     const b = e.target.closest("button[data-act]"); if (!b) return;
     const id = b.closest(".item").dataset.id, it = items.find(i => i.id === id); if (!it) return;
     if (b.dataset.act === "edit") {
       $("#iid").value = id; $("#cat").value = it.cat; $("#nm").value = it.name; $("#ds").value = it.desc || "";
-      $("#pr").value = it.price; $("#vg").value = it.veg ? "1" : "0"; $("#av").checked = !!it.available;
+      $("#pr").value = it.price; $("#vg").value = it.veg ? "1" : "0"; $("#av").checked = !!it.available; $("#lim").value = it.limit || "";
       $("#formTitle").textContent = "Edit item"; $("#cancelEdit").hidden = false;
       $("#itemForm").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (b.dataset.act === "reset") {
+      try { for (const d of [dayKey(0), dayKey(1)]) if (soldOn(id, d)) await updateDoc(doc(db, "stock", d + "_" + id), { sold: 0 }); flash("Sold count reset"); }
+      catch (x) { fail(x); }
     } else if (b.dataset.act === "del") {
       if (!confirm(`Delete "${it.name}"?`)) return;
       try { await deleteDoc(doc(db, "menu", id)); flash("Deleted"); } catch (x) { fail(x); }
     }
   });
-
-  /* ---- add / edit ---- */
   function resetForm() {
     $("#itemForm").reset(); $("#iid").value = ""; $("#av").checked = true;
     $("#formTitle").textContent = "Add item"; $("#cancelEdit").hidden = true; $("#formErr").textContent = "";
@@ -216,19 +475,19 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
     const priceRaw = $("#pr").value.trim(), price = Number(priceRaw);
     if (!cat || !name) { $("#formErr").textContent = "Category and name are required."; return; }
     if (priceRaw === "" || !Number.isFinite(price) || price < 0 || price > 10000) { $("#formErr").textContent = "Enter a price between 0 and 10000."; return; }
+    const limRaw = $("#lim").value.trim(), lim = limRaw === "" ? null : Number(limRaw);
+    if (lim !== null && (!Number.isInteger(lim) || lim < 1 || lim > 500)) { $("#formErr").textContent = "Daily limit must be a whole number from 1 to 500, or blank."; return; }
     $("#formErr").textContent = "";
     const id = $("#iid").value || "i" + Date.now().toString(36);
     const existing = items.find(i => i.id === id);
     const order = existing ? (existing.order || 0) : items.reduce((m, i) => Math.max(m, i.order || 0), 0) + 1;
     $("#saveBtn").disabled = true;
     try {
-      await setDoc(doc(db, "menu", id), { cat, name, desc, price: Math.round(price), veg: $("#vg").value === "1", available: $("#av").checked, order });
+      await setDoc(doc(db, "menu", id), { cat, name, desc, price: Math.round(price), veg: $("#vg").value === "1", available: $("#av").checked, order, ...(lim ? { limit: lim } : {}) });
       flash(existing ? "Item updated" : "Item added"); resetForm();
     } catch (x) { fail(x); }
     $("#saveBtn").disabled = false;
   });
-
-  /* ---- seed ---- */
   $("#seedBtn").addEventListener("click", async () => {
     try {
       const batch = writeBatch(db);
