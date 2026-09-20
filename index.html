@@ -702,8 +702,12 @@ const authMsg = c => ({
   "auth/network-request-failed": "No internet connection.",
   "auth/unauthorized-domain": "This website's domain is not authorized in Firebase yet (see SETUP.txt).",
   "auth/operation-not-allowed": "This sign-in method is not enabled yet.",
-  "auth/popup-blocked": "Popup blocked. Allow popups, or use email and password."
-}[c] || "Could not sign in. Try email and password instead.");
+  "auth/popup-blocked": "Popup blocked. Allow popups, or use email and password.",
+  "auth/configuration-not-found": "Sign-in is not switched on yet. Owner: Firebase console > Authentication > Get started.",
+  "auth/invalid-api-key": "The Firebase key in firebase-config.js is wrong.",
+  "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "The Firebase key in firebase-config.js is wrong.",
+  "auth/web-storage-unsupported": "This browser is blocking storage. Turn off private mode or allow cookies."
+}[c] || `Could not sign in (${c || "unknown"}). Try email and password instead.`);
 
 $("#authForm").addEventListener("submit", async e => {
   e.preventDefault();

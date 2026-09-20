@@ -292,7 +292,10 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
 
   const authErr = c => c === "auth/too-many-requests" ? "Too many attempts. Wait a few minutes and try again."
     : c === "auth/unauthorized-domain" ? "This domain is not in Firebase Authorized domains (see SETUP.txt)."
-    : "Wrong email or password.";
+    : c === "auth/configuration-not-found" ? "Sign-in is not switched on yet: Firebase console > Authentication > Get started."
+    : c === "auth/operation-not-allowed" ? "This sign-in method is not enabled: Firebase console > Authentication > Sign-in method."
+    : (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found" || c === "auth/invalid-email") ? "Wrong email or password."
+    : `Could not sign in (${c || "unknown"}).`;
   $("#loginForm").addEventListener("submit", async e => {
     e.preventDefault();
     $("#loginErr").textContent = ""; $("#loginBtn").disabled = true;
