@@ -1,8 +1,6 @@
-/* Paste your Firebase web-app config here (Firebase console > Project settings > Your apps).
-   While apiKey still starts with "YOUR", the site uses CONFIG.menu from index.html instead. */
 window.FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDAS7hKgYGXDyI_3TK9y06YmpNPAmz4mWI",
+  authDomain: "cloudkitchen-5b259.firebaseapp.com",
+  projectId: "cloudkitchen-5b259",
+  appId: "1:804038802709:web:c7d6b6b0b8ccec1bdb3d1c"
 };
