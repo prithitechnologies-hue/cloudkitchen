@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#1F4A2B">
+<title>Kitchen admin</title>
+<style>
+:root{--leaf:#2E6B3F;--leaf-deep:#1F4A2B;--turmeric:#F0B429;--chilli:#C23B22;--paper:#F5F7F1;--ink:#18261B;--muted:#5B695E;--line:#D9E0D3;--r:12px}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:720px;margin:0 auto;padding:16px 16px 60px}
+h1{font-size:1.5rem;margin:0}
+h2{font-size:1.15rem;margin:22px 0 8px;color:var(--leaf-deep)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:14px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.who{color:var(--muted);font-size:.9rem}
+label{display:block;font-weight:700;font-size:.9rem;margin:12px 0 4px}
+input[type=text],input[type=email],input[type=password],input[type=number],select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+input:focus,select:focus{outline:none;border-color:var(--leaf)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{font:inherit;cursor:pointer;border-radius:10px;border:1.5px solid var(--leaf);background:transparent;color:var(--leaf-deep);padding:9px 14px;font-weight:700}
+button.pri{background:var(--leaf);color:#fff;border-color:var(--leaf)}
+button.del{border-color:var(--chilli);color:var(--chilli)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.msg{position:sticky;top:8px;z-index:5;margin-top:12px;padding:10px 14px;border-radius:10px;font-weight:600;background:#E9F2EA;border:1px solid #B9D3BD}
+.msg.err{background:#F8DDD7;border-color:#E3A99C;color:#5A1A0D}
+.item{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:12px 0;border-bottom:1px dashed var(--line)}
+.item:last-child{border-bottom:0}
+.item b{display:block}
+.item small{color:var(--muted)}
+.dot{display:inline-block;width:12px;height:12px;border:2px solid var(--leaf);border-radius:3px;position:relative;margin-right:6px;vertical-align:-1px}
+.dot::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--leaf)}
+.dot.nv{border-color:var(--chilli)}.dot.nv::after{background:var(--chilli)}
+.stock{display:flex;align-items:center;gap:8px;font-weight:600;margin:0}
+.stock input{width:22px;height:22px;accent-color:var(--leaf)}
+.row2{grid-column:1/-1;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.off b,.off small{opacity:.5}
+.muted{color:var(--muted)}
+.err-t{color:var(--chilli);font-size:.9rem;min-height:1.2em;margin:8px 0 0}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+
+<section id="setup" class="card" hidden>
+  <h1>Setup needed</h1>
+  <p>Open <code>firebase-config.js</code> and paste your Firebase web-app config. See <code>SETUP.txt</code>.</p>
+</section>
+
+<section id="login" class="card" hidden>
+  <h1>Kitchen admin</h1>
+  <form id="loginForm">
+    <label for="em">Email</label>
+    <input type="email" id="em" autocomplete="username" required>
+    <label for="pw">Password</label>
+    <input type="password" id="pw" autocomplete="current-password" required>
+    <p class="err-t" id="loginErr"></p>
+    <div class="actions"><button class="pri" type="submit" id="loginBtn">Sign in</button></div>
+  </form>
+</section>
+
+<section id="panel" hidden>
+  <div class="top">
+    <div><h1>Menu admin</h1><div class="who" id="who"></div></div>
+    <div class="actions" style="margin:0">
+      <a href="index.html" style="align-self:center;font-weight:700;color:var(--leaf-deep)">View site</a>
+      <button type="button" id="out">Sign out</button>
+    </div>
+  </div>
+
+  <div class="msg" id="msg" hidden></div>
+
+  <form id="itemForm" class="card" novalidate>
+    <h2 id="formTitle" style="margin-top:0">Add item</h2>
+    <input type="hidden" id="iid">
+    <label for="cat">Category</label>
+    <input type="text" id="cat" list="cats" placeholder="e.g. Meals, Tiffin, Sweets" maxlength="30">
+    <datalist id="cats"></datalist>
+    <label for="nm">Name</label>
+    <input type="text" id="nm" maxlength="80">
+    <label for="ds">Description</label>
+    <input type="text" id="ds" maxlength="200" placeholder="What's in it">
+    <div class="grid">
+      <div><label for="pr">Price (₹)</label><input type="number" id="pr" min="0" max="10000" step="1" inputmode="numeric"></div>
+      <div><label for="vg">Type</label><select id="vg"><option value="1">Veg</option><option value="0">Non-veg</option></select></div>
+    </div>
+    <label class="stock" style="margin-top:14px"><input type="checkbox" id="av" checked> In stock</label>
+    <p class="err-t" id="formErr"></p>
+    <div class="actions">
+      <button class="pri" type="submit" id="saveBtn">Save item</button>
+      <button type="button" id="cancelEdit" hidden>Cancel edit</button>
+    </div>
+  </form>
+
+  <div id="seed" class="card" hidden>
+    <p style="margin-top:0">No items in the database yet. Site is showing the default menu from <code>index.html</code>.</p>
+    <button type="button" class="pri" id="seedBtn">Import sample menu</button>
+  </div>
+
+  <div id="list"></div>
+</section>
+
+</main>
+
+<script src="firebase-config.js"></script>
+<script type="module">
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const cfg = window.FIREBASE_CONFIG;
+
+const SAMPLE = [
+  ["Meals","Veg meals","Rice, sambar, rasam, 2 poriyal, kootu, curd, pickle",100,true],
+  ["Meals","Chicken biryani","Seeraga samba rice, raita, boiled egg",160,false],
+  ["Meals","Curd rice","Fresh curd rice with pickle and fry",60,true],
+  ["Meals","Lemon rice","With papad and coconut chutney",70,true],
+  ["Tiffin","Idli (4 pcs)","Soft idli with sambar and two chutneys",50,true],
+  ["Tiffin","Chapati (3 pcs)","With vegetable kurma",60,true],
+  ["Tiffin","Chicken curry","Home-style, served in 250 ml box",120,false],
+  ["Sweets","Semiya payasam","150 ml cup",35,true],
+  ["Sweets","Kesari","2 pieces",30,true]
+];
+
+if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
+  $("#setup").hidden = false;
+} else {
+  const V = "10.12.2", base = `https://www.gstatic.com/firebasejs/${V}/`;
+  const [{ initializeApp }, A, F] = await Promise.all([
+    import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")
+  ]);
+  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } = A;
+  const { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, writeBatch } = F;
+  const app = initializeApp(cfg), auth = getAuth(app), db = getFirestore(app);
+
+  let items = [], unsub = null, msgTimer;
+
+  const flash = (t, err) => {
+    const m = $("#msg"); m.textContent = t; m.className = "msg" + (err ? " err" : ""); m.hidden = false;
+    clearTimeout(msgTimer); msgTimer = setTimeout(() => m.hidden = true, err ? 7000 : 2500);
+  };
+  const fail = e => flash(e && e.code === "permission-denied" ? "This account is not allowed to edit the menu." : "Something went wrong. Check your internet and try again.", true);
+
+  /* ---- auth ---- */
+  onAuthStateChanged(auth, user => {
+    $("#login").hidden = !!user; $("#panel").hidden = !user;
+    if (unsub) { unsub(); unsub = null; }
+    if (!user) return;
+    $("#who").textContent = user.email;
+    unsub = onSnapshot(collection(db, "menu"), snap => {
+      items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      items.sort((a, b) => (a.order || 0) - (b.order || 0) || String(a.name).localeCompare(String(b.name)));
+      render();
+    }, fail);
+  });
+
+  $("#loginForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    $("#loginErr").textContent = ""; $("#loginBtn").disabled = true;
+    try { await signInWithEmailAndPassword(auth, $("#em").value.trim(), $("#pw").value); $("#pw").value = ""; }
+    catch (x) {
+      $("#loginErr").textContent = x.code === "auth/too-many-requests" ? "Too many attempts. Wait a few minutes and try again." : "Wrong email or password.";
+    }
+    $("#loginBtn").disabled = false;
+  });
+  $("#out").addEventListener("click", () => signOut(auth));
+
+  /* ---- list ---- */
+  function render() {
+    const cats = [...new Set(items.map(i => i.cat))];
+    $("#cats").innerHTML = cats.map(c => `<option value="${esc(c)}">`).join("");
+    $("#seed").hidden = items.length > 0;
+    $("#list").innerHTML = cats.map(c => `
+      <h2>${esc(c)}</h2>
+      <div class="card" style="margin-top:0">
+      ${items.filter(i => i.cat === c).map(i => `
+        <div class="item ${i.available ? "" : "off"}" data-id="${esc(i.id)}">
+          <div><b><span class="dot ${i.veg ? "" : "nv"}"></span>${esc(i.name)} · ₹${esc(i.price)}</b><small>${esc(i.desc)}</small></div>
+          <label class="stock"><input type="checkbox" data-act="stock" ${i.available ? "checked" : ""}> In stock</label>
+          <div class="row2"><span></span><span class="actions" style="margin:0"><button type="button" data-act="edit">Edit</button><button type="button" class="del" data-act="del">Delete</button></span></div>
+        </div>`).join("")}
+      </div>`).join("");
+  }
+
+  $("#list").addEventListener("change", async e => {
+    const cb = e.target.closest('[data-act="stock"]'); if (!cb) return;
+    const id = cb.closest(".item").dataset.id;
+    try { await updateDoc(doc(db, "menu", id), { available: cb.checked }); flash(cb.checked ? "Marked in stock" : "Marked sold out"); }
+    catch (x) { fail(x); render(); }
+  });
+  $("#list").addEventListener("click", async e => {
+    const b = e.target.closest("button[data-act]"); if (!b) return;
+    const id = b.closest(".item").dataset.id, it = items.find(i => i.id === id); if (!it) return;
+    if (b.dataset.act === "edit") {
+      $("#iid").value = id; $("#cat").value = it.cat; $("#nm").value = it.name; $("#ds").value = it.desc || "";
+      $("#pr").value = it.price; $("#vg").value = it.veg ? "1" : "0"; $("#av").checked = !!it.available;
+      $("#formTitle").textContent = "Edit item"; $("#cancelEdit").hidden = false;
+      $("#itemForm").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (b.dataset.act === "del") {
+      if (!confirm(`Delete "${it.name}"?`)) return;
+      try { await deleteDoc(doc(db, "menu", id)); flash("Deleted"); } catch (x) { fail(x); }
+    }
+  });
+
+  /* ---- add / edit ---- */
+  function resetForm() {
+    $("#itemForm").reset(); $("#iid").value = ""; $("#av").checked = true;
+    $("#formTitle").textContent = "Add item"; $("#cancelEdit").hidden = true; $("#formErr").textContent = "";
+  }
+  $("#cancelEdit").addEventListener("click", resetForm);
+  $("#itemForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const cat = $("#cat").value.trim(), name = $("#nm").value.trim(), desc = $("#ds").value.trim();
+    const priceRaw = $("#pr").value.trim(), price = Number(priceRaw);
+    if (!cat || !name) { $("#formErr").textContent = "Category and name are required."; return; }
+    if (priceRaw === "" || !Number.isFinite(price) || price < 0 || price > 10000) { $("#formErr").textContent = "Enter a price between 0 and 10000."; return; }
+    $("#formErr").textContent = "";
+    const id = $("#iid").value || "i" + Date.now().toString(36);
+    const existing = items.find(i => i.id === id);
+    const order = existing ? (existing.order || 0) : items.reduce((m, i) => Math.max(m, i.order || 0), 0) + 1;
+    $("#saveBtn").disabled = true;
+    try {
+      await setDoc(doc(db, "menu", id), { cat, name, desc, price: Math.round(price), veg: $("#vg").value === "1", available: $("#av").checked, order });
+      flash(existing ? "Item updated" : "Item added"); resetForm();
+    } catch (x) { fail(x); }
+    $("#saveBtn").disabled = false;
+  });
+
+  /* ---- seed ---- */
+  $("#seedBtn").addEventListener("click", async () => {
+    try {
+      const batch = writeBatch(db);
+      SAMPLE.forEach(([cat, name, desc, price, veg], n) => batch.set(doc(db, "menu", "s" + (n + 1)), { cat, name, desc, price, veg, available: true, order: n + 1 }));
+      await batch.commit(); flash("Sample menu imported");
+    } catch (x) { fail(x); }
+  });
+}
+</script>
+</body>
+</html>

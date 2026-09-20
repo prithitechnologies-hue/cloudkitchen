@@ -1,0 +1,41 @@
+ADMIN-EDITABLE MENU (Firebase, free Spark plan)
+================================================
+Files
+  index.html         customer page (menu is read live from Firestore)
+  admin.html         owner login: add / edit / delete items, In-stock toggle
+  firebase-config.js paste your Firebase config here
+  firestore.rules    security rules (only the owner's email can write)
+  firebase.json      only needed if you deploy with Firebase Hosting
+
+ONE-TIME SETUP
+1. console.firebase.google.com > Add project (no billing needed).
+2. Build > Firestore Database > Create database > Production mode.
+   Region: asia-south1 (Mumbai).
+3. Build > Authentication > Get started > enable Email/Password.
+   Users tab > Add user: the owner's email + a strong password.
+   (There is no sign-up screen on purpose - only this user can log in.)
+4. Project settings > Your apps > Web (</>) > register app.
+   Copy the config values into firebase-config.js.
+5. Firestore > Rules: paste firestore.rules, replace owner@example.com with
+   the owner's login email (lowercase), then Publish.
+6. Authentication > Settings > Authorized domains: add the domain you host on
+   (e.g. yourkitchen.pages.dev).
+7. Edit CONFIG in index.html: whatsapp, upiId, kitchen name, blocks/fees, slots.
+   (Menu items now come from the admin page, not CONFIG.)
+8. Deploy the whole folder (Cloudflare Pages / Netlify / GitHub Pages /
+   Firebase Hosting: `firebase deploy`).
+9. Open https://<your-site>/admin.html, sign in, tap "Import sample menu"
+   (or add items yourself). Customers see changes instantly.
+
+LOCAL TEST
+  python3 -m http.server 8000   then open http://localhost:8000/ and /admin.html
+
+DAILY USE (owner, on phone)
+  Open /admin.html > untick "In stock" for finished items. Done.
+
+NOTES
+- Until firebase-config.js is filled in, the site falls back to CONFIG.menu.
+- If Firestore is unreachable for 6 seconds, customers also see CONFIG.menu.
+- Optional hardening: Google Cloud console > APIs & Services > Credentials >
+  restrict the browser API key to your site's domain.
+- Free-tier reads (50k/day) comfortably cover an apartment complex.

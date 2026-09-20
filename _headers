@@ -1,0 +1,14 @@
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/firebase-config.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/admin.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
