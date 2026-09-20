@@ -71,6 +71,20 @@ NEW IN THE PREVIOUS VERSION
     Limits only work when customers are signed in (the count is saved with the order).
     Guest orders / Firebase offline do not count against the limit.
 
+ITEM PHOTOS
+  Admin > Menu > Add/Edit item > Photo: pick a picture (camera or gallery). It is cropped to a
+  small square and saved inside the menu item (no paid storage needed). Items without a photo
+  show a food icon automatically, so every item has a picture. "Remove photo" goes back to the icon.
+  Keep photos of the food itself; very detailed photos are shrunk, that is normal.
+
+ADMIN LOGIN: REMEMBER ME
+  "Keep me signed in on this device" (ticked by default) keeps the admin signed in after the
+  browser closes; untick it on a shared computer. The page never stores your password: let
+  Chrome/Samsung Internet save it when they ask, then it fills in next time.
+  "Forgot password?" emails a reset link.
+  This zip already contains the real firebase-config.js, .firebaserc and admin ID in
+  firestore.rules for project cloudkitchen-5b259.
+
 VOICE ALERTS (admin page)
   Admin > "Voice alerts": tap once to turn on (browsers need a tap), pick English or Tamil,
   press Test. Then it speaks:

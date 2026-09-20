@@ -61,6 +61,9 @@ code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
 .sum{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-weight:700}
 @media print{body{background:#fff}.top,.msg,.tabs,.noprint,.chips{display:none!important}.card{border:0;padding:0;margin-top:8px}main{max-width:none;padding:0}}
 [hidden]{display:none!important}
+.pv{width:84px;height:84px;border-radius:12px;background:#EAF1E8;display:flex;align-items:center;justify-content:center;font-size:2.2rem;overflow:hidden;border:1px solid var(--line);flex:none}
+.pv img,.mini img{width:100%;height:100%;object-fit:cover;display:block}
+.mini{width:46px;height:46px;border-radius:9px;background:#EAF1E8;display:flex;align-items:center;justify-content:center;font-size:1.5rem;overflow:hidden;flex:none;border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -75,13 +78,14 @@ code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
   <h1>Kitchen admin</h1>
   <button type="button" class="pri" id="gBtn" style="width:100%;margin-top:14px">Continue with Google</button>
   <p class="or">or use email</p>
-  <form id="loginForm">
+  <form id="loginForm" method="post" action="#">
     <label for="em">Email</label>
-    <input type="email" id="em" autocomplete="username" required>
+    <input type="email" id="em" name="email" autocomplete="username" required>
     <label for="pw">Password</label>
-    <input type="password" id="pw" autocomplete="current-password" required>
+    <input type="password" id="pw" name="password" autocomplete="current-password" required>
+    <label class="stock" style="margin-top:12px"><input type="checkbox" id="keep" checked> Keep me signed in on this device</label>
     <p class="err-t" id="loginErr"></p>
-    <div class="actions"><button class="pri" type="submit" id="loginBtn">Sign in</button></div>
+    <div class="actions"><button class="pri" type="submit" id="loginBtn">Sign in</button><button type="button" id="forgot">Forgot password?</button></div>
   </form>
 </section>
 
@@ -156,6 +160,16 @@ code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
         <div><label for="pr">Price (₹)</label><input type="number" id="pr" min="0" max="10000" step="1" inputmode="numeric"></div>
         <div><label for="vg">Type</label><select id="vg"><option value="1">Veg</option><option value="0">Non-veg</option></select></div>
       </div>
+      <label>Photo</label>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div id="photoPrev" class="pv">🍽️</div>
+        <div>
+          <input type="file" id="photo" accept="image/*" style="width:auto;max-width:100%">
+          <div class="actions" style="margin-top:8px"><button type="button" id="photoRemove" hidden>Remove photo</button></div>
+        </div>
+      </div>
+      <p class="muted" style="font-size:.85rem;margin:6px 0 0">Optional. Shrunk automatically to a small square. Items without a photo show a food icon.</p>
+      <p class="err-t" id="photoErr"></p>
       <label for="lim">Daily limit (blank = unlimited)</label>
       <input type="number" id="lim" min="1" max="500" step="1" inputmode="numeric" placeholder="e.g. 20">
       <label class="stock" style="margin-top:14px"><input type="checkbox" id="av" checked> In stock</label>
@@ -204,7 +218,7 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
   const [{ initializeApp }, A, F] = await Promise.all([
     import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")
   ]);
-  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } = A;
+  const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail } = A;
   const { getFirestore, collection, query, orderBy, limit, where, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } = F;
   const app = initializeApp(cfg), auth = getAuth(app), db = getFirestore(app);
 
@@ -296,17 +310,35 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
     : c === "auth/operation-not-allowed" ? "This sign-in method is not enabled: Firebase console > Authentication > Sign-in method."
     : (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found" || c === "auth/invalid-email") ? "Wrong email or password."
     : `Could not sign in (${c || "unknown"}).`;
+  /* remember me: stay signed in on this device (default) or only until the tab closes.
+     Passwords are never stored by this page: the browser's own password manager keeps them. */
+  const LS = { get: k => { try { return localStorage.getItem(k); } catch (x) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (x) {} } };
+  $("#em").value = LS.get("kitchen_admin_email") || "";
+  $("#keep").checked = LS.get("kitchen_admin_keep") !== "0";
+  const usePersistence = () => setPersistence(auth, $("#keep").checked ? browserLocalPersistence : browserSessionPersistence);
+  const remember = () => { LS.set("kitchen_admin_keep", $("#keep").checked ? "1" : "0"); LS.set("kitchen_admin_email", $("#em").value.trim()); };
   $("#loginForm").addEventListener("submit", async e => {
     e.preventDefault();
     $("#loginErr").textContent = ""; $("#loginBtn").disabled = true;
-    try { await signInWithEmailAndPassword(auth, $("#em").value.trim(), $("#pw").value); $("#pw").value = ""; }
-    catch (x) { $("#loginErr").textContent = authErr(x.code); }
+    const email = $("#em").value.trim(), pw = $("#pw").value;
+    try {
+      remember(); await usePersistence();
+      await signInWithEmailAndPassword(auth, email, pw);
+      try { if (window.PasswordCredential && navigator.credentials) await navigator.credentials.store(new PasswordCredential({ id: email, password: pw, name: email })); } catch (x) {}
+      $("#pw").value = "";
+    } catch (x) { $("#loginErr").textContent = authErr(x.code); }
     $("#loginBtn").disabled = false;
   });
   $("#gBtn").addEventListener("click", async () => {
     $("#loginErr").textContent = "";
-    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+    try { remember(); await usePersistence(); await signInWithPopup(auth, new GoogleAuthProvider()); }
     catch (x) { if (!/popup-closed|cancelled-popup/.test(x.code || "")) $("#loginErr").textContent = authErr(x.code); }
+  });
+  $("#forgot").addEventListener("click", async () => {
+    const email = $("#em").value.trim();
+    if (!email) { $("#loginErr").textContent = "Type your email above first."; return; }
+    try { await sendPasswordResetEmail(auth, email); $("#loginErr").textContent = "If that account exists, a reset link has been emailed."; }
+    catch (x) { $("#loginErr").textContent = authErr(x.code); }
   });
   $("#out").addEventListener("click", () => { voice.on = false; $("#voiceBtn").textContent = "🔊 Voice alerts: Off"; keepAwake(false); if ("speechSynthesis" in window) speechSynthesis.cancel(); signOut(auth); });
   $("#deniedOut").addEventListener("click", () => signOut(auth));
@@ -414,6 +446,53 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
   $("#cookCsv").addEventListener("click", () => { const day = $("#cookDate").value || dayKey(0); exportCsv(orders.filter(o => dateOf(o) === day), `orders-${day}.csv`); });
   $("#cookCsvAll").addEventListener("click", () => exportCsv(orders, "orders-all.csv"));
 
+  /* ---- item photos: shrunk to a small square JPEG and stored inside the menu item ---- */
+  const IMG_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+  const EMOJI = [
+    [/biryani|briyani|pulao|pulav/i, "🍛"], [/meal|thali|lunch|combo/i, "🍱"], [/idli|idly|dosa|dosai|uttapam|pongal|upma/i, "🥞"],
+    [/vada|bonda|bajji|pakoda|samosa|cutlet|puff/i, "🥟"], [/chapati|chapathi|roti|paratha|parotta|naan|puri|poori/i, "🥙"],
+    [/chicken/i, "🍗"], [/fish|prawn|meen/i, "🐟"], [/egg|omelette/i, "🥚"], [/mutton|lamb|keema/i, "🍖"], [/rice|sadam/i, "🍚"],
+    [/curry|kurma|kuzhambu|sambar|gravy|dal|dhal/i, "🍲"], [/payasam|kheer|kesari|halwa|sweet|laddu|jalebi|gulab|mysore/i, "🍮"],
+    [/cake|brownie/i, "🍰"], [/ice ?cream|kulfi/i, "🍨"], [/tea|chai|coffee/i, "☕"],
+    [/juice|lassi|buttermilk|moru|milkshake|drink|soda/i, "🥤"], [/salad/i, "🥗"], [/curd|yogurt|yoghurt|raita/i, "🥛"]
+  ];
+  const emojiFor = i => { for (const t of [i.name || "", i.cat || ""]) for (const [re, e] of EMOJI) if (re.test(t)) return e; return "🍽️"; };
+  const miniPic = i => i.img && IMG_OK.test(i.img) ? `<img src="${i.img}" alt="">` : emojiFor(i);
+  let formImg = null;
+  function setPreview(src) {
+    const pv = $("#photoPrev"), ok = !!(src && IMG_OK.test(src));
+    pv.textContent = "";
+    if (ok) { const im = document.createElement("img"); im.alt = ""; im.src = src; pv.appendChild(im); } else pv.textContent = "🍽️";
+    $("#photoRemove").hidden = !ok;
+  }
+  function squareJpeg(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        for (const [px, q] of [[360, 0.75], [360, 0.6], [300, 0.55], [240, 0.5]]) {
+          const c = document.createElement("canvas"); c.width = c.height = px;
+          const ctx = c.getContext("2d"), side = Math.min(img.width, img.height);
+          ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, px, px);
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, px, px);
+          const out = c.toDataURL("image/jpeg", q);
+          if (out.length <= 55000) return res(out);
+        }
+        rej(new Error("too big"));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("bad image")); };
+      img.src = url;
+    });
+  }
+  $("#photo").addEventListener("change", async e => {
+    const f = e.target.files && e.target.files[0]; $("#photoErr").textContent = "";
+    if (!f) return;
+    if (!/^image\//.test(f.type)) { $("#photoErr").textContent = "Choose an image file."; e.target.value = ""; return; }
+    try { formImg = await squareJpeg(f); setPreview(formImg); }
+    catch (x) { $("#photoErr").textContent = "Could not read that image. Try another photo."; e.target.value = ""; }
+  });
+  $("#photoRemove").addEventListener("click", () => { formImg = null; $("#photo").value = ""; setPreview(null); });
+
   /* ---- menu ---- */
   const soldOn = (id, day) => (stock[day] || {})[id] || 0;
   const limitInfo = i => i.limit ? `<small style="display:block">Limit ${esc(i.limit)}/day · sold today ${soldOn(i.id, dayKey(0))}, tomorrow ${soldOn(i.id, dayKey(1))}</small>` : "";
@@ -440,7 +519,7 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
       <div class="card" style="margin-top:0">
       ${items.filter(i => i.cat === c).map(i => `
         <div class="item ${i.available ? "" : "off"}" data-id="${esc(i.id)}">
-          <div><b><span class="dot ${i.veg ? "" : "nv"}"></span>${esc(i.name)} · ₹${esc(i.price)}</b><small>${esc(i.desc)}</small>${limitInfo(i)}</div>
+          <div style="display:flex;gap:10px;align-items:center;min-width:0"><span class="mini">${miniPic(i)}</span><div><b><span class="dot ${i.veg ? "" : "nv"}"></span>${esc(i.name)} · ₹${esc(i.price)}</b><small>${esc(i.desc)}</small>${limitInfo(i)}</div></div>
           <label class="stock"><input type="checkbox" data-act="stock" ${i.available ? "checked" : ""}> In stock</label>
           <div class="row2"><span></span><span class="actions" style="margin:0">${hasSold(i) ? '<button type="button" data-act="reset">Reset sold</button>' : ""}<button type="button" data-act="edit">Edit</button><button type="button" class="del" data-act="del">Delete</button></span></div>
         </div>`).join("")}
@@ -456,7 +535,7 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
     const id = b.closest(".item").dataset.id, it = items.find(i => i.id === id); if (!it) return;
     if (b.dataset.act === "edit") {
       $("#iid").value = id; $("#cat").value = it.cat; $("#nm").value = it.name; $("#ds").value = it.desc || "";
-      $("#pr").value = it.price; $("#vg").value = it.veg ? "1" : "0"; $("#av").checked = !!it.available; $("#lim").value = it.limit || "";
+      $("#pr").value = it.price; $("#vg").value = it.veg ? "1" : "0"; $("#av").checked = !!it.available; $("#lim").value = it.limit || ""; formImg = IMG_OK.test(it.img || "") ? it.img : null; setPreview(formImg); $("#photo").value = ""; $("#photoErr").textContent = "";
       $("#formTitle").textContent = "Edit item"; $("#cancelEdit").hidden = false;
       $("#itemForm").scrollIntoView({ behavior: "smooth", block: "start" });
     } else if (b.dataset.act === "reset") {
@@ -468,7 +547,7 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
     }
   });
   function resetForm() {
-    $("#itemForm").reset(); $("#iid").value = ""; $("#av").checked = true;
+    $("#itemForm").reset(); $("#iid").value = ""; $("#av").checked = true; formImg = null; setPreview(null); $("#photoErr").textContent = "";
     $("#formTitle").textContent = "Add item"; $("#cancelEdit").hidden = true; $("#formErr").textContent = "";
   }
   $("#cancelEdit").addEventListener("click", resetForm);
@@ -486,7 +565,7 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
     const order = existing ? (existing.order || 0) : items.reduce((m, i) => Math.max(m, i.order || 0), 0) + 1;
     $("#saveBtn").disabled = true;
     try {
-      await setDoc(doc(db, "menu", id), { cat, name, desc, price: Math.round(price), veg: $("#vg").value === "1", available: $("#av").checked, order, ...(lim ? { limit: lim } : {}) });
+      await setDoc(doc(db, "menu", id), { cat, name, desc, price: Math.round(price), veg: $("#vg").value === "1", available: $("#av").checked, order, ...(lim ? { limit: lim } : {}), ...(formImg ? { img: formImg } : {}) });
       flash(existing ? "Item updated" : "Item added"); resetForm();
     } catch (x) { fail(x); }
     $("#saveBtn").disabled = false;

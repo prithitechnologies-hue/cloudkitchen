@@ -10,7 +10,7 @@ service cloud.firestore {
     }
 
     function validItem(d) {
-      return d.keys().hasOnly(['cat','name','desc','price','veg','available','order','limit'])
+      return d.keys().hasOnly(['cat','name','desc','price','veg','available','order','limit','img'])
           && d.cat is string && d.cat.size() > 0 && d.cat.size() <= 30
           && d.name is string && d.name.size() > 0 && d.name.size() <= 80
           && d.desc is string && d.desc.size() <= 200
@@ -18,7 +18,8 @@ service cloud.firestore {
           && d.veg is bool
           && d.available is bool
           && d.order is number
-          && (!('limit' in d) || (d.limit is number && d.limit >= 1 && d.limit <= 500));
+          && (!('limit' in d) || (d.limit is number && d.limit >= 1 && d.limit <= 500))
+          && (!('img' in d) || (d.img is string && d.img.size() <= 60000));
     }
 
     function validOrder(d) {

@@ -131,6 +131,14 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
 .chkrow{display:flex;gap:8px;align-items:flex-start;font-weight:600;margin-top:10px}
 .chkrow input{width:20px;height:20px;margin-top:2px;flex:none}
 #proof{width:100%;margin-top:6px}
+.thumb{flex:none;width:84px;height:84px;border-radius:12px;overflow:hidden;background:#EAF1E8;display:flex;align-items:center;justify-content:center}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .ph{font-size:2.3rem;line-height:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+.ph.c0{background:#EAF1E8}.ph.c1{background:#FCEFD0}.ph.c2{background:#F8DDD3}.ph.c3{background:#E3ECF7}.ph.c4{background:#F1E5F5}.ph.c5{background:#E6F3F0}
+.item.sold .thumb{filter:grayscale(1)}
+.item .info{flex:1;min-width:0}
+@media (max-width:420px){.thumb{width:72px;height:72px}.thumb .ph{font-size:2rem}.act{min-width:92px}.item{gap:10px}}
+@media (max-width:340px){.thumb{width:58px;height:58px}.thumb .ph{font-size:1.7rem}.act{min-width:84px}}
 </style>
 </head>
 <body>
@@ -242,9 +250,9 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
     <form id="authForm" novalidate>
       <div id="nameRow" hidden><label for="an">Your name</label><input type="text" id="an" autocomplete="name"></div>
       <label for="ae">Email</label>
-      <input type="email" id="ae" autocomplete="username">
+      <input type="email" id="ae" name="email" autocomplete="username">
       <label for="ap">Password</label>
-      <input type="password" id="ap" autocomplete="current-password">
+      <input type="password" id="ap" name="password" autocomplete="current-password">
       <p class="err" id="authErr"></p>
       <button type="submit" class="btn go" id="authBtn">Sign in</button>
     </form>
@@ -324,6 +332,24 @@ $("#facts").innerHTML =
 
 /* ---------- menu ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const IMG_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const EMOJI = [
+  [/biryani|briyani|pulao|pulav/i, "🍛"], [/meal|thali|lunch|combo/i, "🍱"],
+  [/idli|idly|dosa|dosai|uttapam|pongal|upma/i, "🥞"], [/vada|bonda|bajji|pakoda|samosa|cutlet|puff/i, "🥟"],
+  [/chapati|chapathi|roti|paratha|parotta|naan|puri|poori/i, "🥙"], [/chicken/i, "🍗"], [/fish|prawn|meen/i, "🐟"],
+  [/egg|omelette/i, "🥚"], [/mutton|lamb|keema/i, "🍖"], [/rice|sadam/i, "🍚"],
+  [/curry|kurma|kuzhambu|sambar|gravy|dal|dhal/i, "🍲"], [/payasam|kheer|kesari|halwa|sweet|laddu|jalebi|gulab|mysore/i, "🍮"],
+  [/cake|brownie/i, "🍰"], [/ice ?cream|kulfi/i, "🍨"], [/tea|chai|coffee/i, "☕"],
+  [/juice|lassi|buttermilk|moru|milkshake|drink|soda/i, "🥤"], [/salad/i, "🥗"], [/curd|yogurt|yoghurt|raita/i, "🥛"]
+];
+function emojiFor(m) {
+  for (const text of [m.name || "", m.cat || ""]) for (const [re, e] of EMOJI) if (re.test(text)) return e;
+  return "🍽️";
+}
+function thumb(m) {
+  if (m.img && IMG_OK.test(m.img)) return `<img src="${m.img}" alt="" loading="lazy" decoding="async">`;
+  return `<span class="ph c${[...String(m.name || "")].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 6}" aria-hidden="true">${emojiFor(m)}</span>`;
+}
 function applyMenu(items) {
   menuShown = true;
   byId = Object.fromEntries(items.map(m => [m.id, m]));
@@ -335,7 +361,8 @@ function applyMenu(items) {
   <section id="cat-${i}"><h2>${esc(c)}</h2>
   ${items.filter(m => m.cat === c).map(m => `
     <article class="item ${m.available ? "" : "sold"}" data-id="${esc(m.id)}">
-      <div>
+      <div class="thumb">${thumb(m)}</div>
+      <div class="info">
         <h3><span class="dot ${m.veg ? "" : "nv"}" role="img" aria-label="${m.veg ? "Vegetarian" : "Non-vegetarian"}"></span>${esc(m.name)}</h3>
         <p>${esc(m.desc)}</p>
         <span class="price">${rs(m.price)}</span><span class="left"></span>
@@ -718,6 +745,7 @@ $("#authForm").addEventListener("submit", async e => {
   try {
     if (authMode === "up") { await window.FB.signUp(email, pw, nm); if (!$("#name").value) $("#name").value = nm; renderAcct(); }
     else await window.FB.signIn(email, pw);
+    try { if (window.PasswordCredential && navigator.credentials) await navigator.credentials.store(new PasswordCredential({ id: email, password: pw, name: nm || email })); } catch (x) {}
     $("#ap").value = ""; showModal("authModal", false);
   } catch (x) { $("#authErr").textContent = authMsg(x.code); }
   $("#authBtn").disabled = false;
@@ -808,7 +836,7 @@ if (window.__fbOn) {
     F.onSnapshot(F.collection(db, "menu"), snap => {
       const items = snap.docs.map(d => {
         const x = d.data();
-        return { id: d.id, cat: x.cat || "Menu", name: x.name || "", desc: x.desc || "", price: Number(x.price) || 0, veg: x.veg !== false, available: x.available === true, order: Number(x.order) || 0, limit: Number(x.limit) > 0 ? Number(x.limit) : undefined };
+        return { id: d.id, cat: x.cat || "Menu", name: x.name || "", desc: x.desc || "", price: Number(x.price) || 0, veg: x.veg !== false, available: x.available === true, order: Number(x.order) || 0, limit: Number(x.limit) > 0 ? Number(x.limit) : undefined, img: typeof x.img === "string" ? x.img : undefined };
       });
       items.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
       window.setMenuFromServer(items);
