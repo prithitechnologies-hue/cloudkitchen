@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<!-- Jacob's Kitchen ordering platform - developed by Prithi Technologies (prithitechnologies@gmail.com) - v1.0.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="author" content="Prithi Technologies">
+<title>QR poster – Jacob's Kitchen</title>
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--leaf:#2E6B3F;--deep:#1F4A2B;--turmeric:#F0B429;--paper:#F5F7F1;--ink:#18261B;--muted:#5B695E;--line:#D9E0D3}
+*{box-sizing:border-box}
+body{margin:0;background:#E7EBE3;color:var(--ink);font-family:"Nunito Sans",system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Tamil","Nirmala UI",sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bar{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line);padding:10px 14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar button{font:inherit;font-weight:700;cursor:pointer;border-radius:10px;border:1.5px solid var(--leaf);background:#fff;color:var(--deep);padding:9px 14px;min-height:44px}
+.bar button.on,.bar button.pri{background:var(--leaf);color:#fff}
+.hint{font-size:.85rem;color:var(--muted);flex:1 1 260px}
+.stage{padding:16px 0 40px;display:flex;justify-content:center}
+.fit{transform-origin:top center}
+
+/* ---- the poster: designed on a 50em x 70.7em canvas so A4 and A5 share one layout ---- */
+.sheet{width:210mm;height:297mm;font-size:4.2mm;background:#fff;position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 6px 30px rgba(0,0,0,.18);font-family:"Nunito Sans",system-ui,"Noto Sans Tamil","Nirmala UI",sans-serif}
+.sheet.a5{width:148mm;height:210mm;font-size:2.96mm}
+.head{background:var(--deep);color:#fff;text-align:center;padding:2.3em 2em 1.9em;position:relative}
+.head .k{font-family:"Baloo 2","Trebuchet MS",system-ui,sans-serif;font-weight:800;font-size:4.2em;line-height:1.05;margin:0}
+.head .ta{color:var(--turmeric);font-weight:700;font-size:1.6em;margin:.3em 0 0;font-family:"Noto Sans Tamil","Nirmala UI","Baloo 2",sans-serif}
+.head .tag{font-size:1.15em;margin:.45em auto 0;max-width:36em;color:#DCE8DD}
+.strip{background:var(--turmeric);color:#3b2a00;text-align:center;font-family:"Baloo 2",system-ui,sans-serif;font-weight:800;font-size:1.35em;letter-spacing:.06em;padding:.3em 0}
+.mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.2em 2em 0;gap:.7em}
+.qrcard{background:#fff;border:.28em solid var(--deep);border-radius:1.4em;padding:1em;width:20em;height:20em;box-shadow:0 .4em 0 var(--turmeric)}
+.qrcard svg{width:100%;height:100%;display:block}
+.scan{font-family:"Baloo 2",system-ui,sans-serif;font-weight:800;font-size:2em;line-height:1.1;margin:.2em 0 0;text-align:center;color:var(--deep)}
+.scan small{display:block;font-family:"Noto Sans Tamil","Nirmala UI",sans-serif;font-weight:700;font-size:.62em;color:var(--leaf);margin-top:.2em}
+.steps{display:flex;gap:1.1em;justify-content:center;margin-top:.6em}
+.step{width:10.2em;text-align:center;font-size:.96em;line-height:1.25}
+.step i{font-style:normal;display:flex;width:2.3em;height:2.3em;margin:0 auto .4em;background:var(--leaf);color:#fff;border-radius:50%;align-items:center;justify-content:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:1.25em}
+.step b{display:block;color:var(--deep)}
+.info{display:grid;grid-template-columns:1.7fr 1fr;gap:.6em 1.4em;background:var(--paper);border:1px solid var(--line);border-radius:1em;padding:.85em 1.3em;margin:.6em 2.2em 0;font-size:.95em;line-height:1.35}
+.info h4{margin:0 0 .15em;font-family:"Baloo 2",sans-serif;font-size:1.05em;color:var(--deep)}
+.info p{margin:0}
+.contact{display:flex;justify-content:space-between;align-items:center;gap:1em;margin:.7em 2.2em 0;padding:.65em 1.3em;background:var(--deep);color:#fff;border-radius:1em;font-size:1.05em}
+.contact b{font-family:"Baloo 2",sans-serif;font-size:1.25em}
+.contact code{font-family:ui-monospace,Consolas,monospace;background:rgba(255,255,255,.14);padding:.1em .5em;border-radius:.4em;font-size:.98em}
+.foot{display:flex;justify-content:space-between;gap:1em;align-items:center;font-size:.82em;color:var(--muted);padding:.8em 2.2em 1em}
+.foot b{color:var(--deep)}
+.noprint{}
+@media print{
+  body{background:#fff}
+  .noprint{display:none!important}
+  .stage{padding:0;display:block}
+  .fit{zoom:1!important;transform:none!important}
+  .sheet{box-shadow:none;margin:0}
+}
+</style>
+</head>
+<body>
+
+<div class="bar noprint">
+  <button type="button" data-size="a4" class="on">A4 poster</button>
+  <button type="button" data-size="a5">A5 (half page)</button>
+  <button type="button" id="print" class="pri">Print / Save as PDF</button>
+  <span class="hint">In the print box: paper A4 (or A5), Margins: None, and turn on <b>Background graphics</b>.</span>
+</div>
+
+<div class="stage"><div class="fit" id="fit">
+  <section class="sheet" id="sheet" aria-label="Order poster">
+    <div class="head">
+      <p class="k" id="pName"></p>
+      <p class="ta" id="pTamil"></p>
+      <p class="tag" id="pTag"></p>
+    </div>
+    <div class="strip">SCAN &nbsp;·&nbsp; ORDER &nbsp;·&nbsp; ENJOY</div>
+    <div class="mid">
+      <div class="qrcard" id="qr" role="img" aria-label="QR code to open the ordering website"></div>
+      <p class="scan">Scan to see the menu &amp; order<small>ஸ்கேன் செய்து ஆர்டர் செய்யுங்கள்</small></p>
+      <div class="steps">
+        <div class="step"><i>1</i><b>Scan</b>the QR with your phone camera</div>
+        <div class="step"><i>2</i><b>Choose</b>your dishes and slot</div>
+        <div class="step"><i>3</i><b>Pay by UPI</b>and attach the screenshot</div>
+        <div class="step"><i>4</i><b>We deliver</b>fresh to your flat</div>
+      </div>
+    </div>
+    <div class="info">
+      <div><h4>Order timings</h4><p id="pTimes"></p></div>
+      <div><h4>Delivery</h4><p id="pArea"></p><p>Payment: UPI</p></div>
+    </div>
+    <div class="contact">
+      <div>Questions? WhatsApp us<br><b id="pPhone"></b></div>
+      <div style="text-align:right">Or visit<br><code id="pUrl"></code></div>
+    </div>
+    <div class="foot">
+      <span id="pFssai"></span>
+      <span>Website by <b>Prithi Technologies</b> · prithitechnologies@gmail.com</span>
+    </div>
+  </section>
+</div></div>
+
+<script src="qrcode.js"></script>
+<script>
+/* ===== EDIT THIS BLOCK, then print again ===== */
+const POSTER = {
+  kitchen: "Jacob's Kitchen",
+  tamil: "வீட்டு சமையல் உணவு",
+  tagline: "Fresh home-cooked food, made in small batches and delivered to your flat.",
+  phone: "+91 98945 96364",
+  area: "Delivering inside our apartment complex",
+  timings: ["Lunch: order by 10:30 AM · delivered 12:30–1:30 PM", "Dinner: order by 5:30 PM · delivered 7:30–8:30 PM"],
+  fssai: "",                                              // e.g. "FSSAI Lic. No. 12345678901234" (leave blank until you have it)
+  defaultUrl: "https://cloudkitchen-5b259.web.app/"       // used when this page is opened from a file
+};
+/* ============================================ */
+const $ = s => document.querySelector(s);
+const qs = new URLSearchParams(location.search);
+const siteUrl = qs.get("url") || (/^https?:$/.test(location.protocol) ? location.origin + "/" : POSTER.defaultUrl);
+
+$("#pName").textContent = POSTER.kitchen;
+$("#pTamil").textContent = POSTER.tamil;
+$("#pTag").textContent = POSTER.tagline;
+$("#pPhone").textContent = POSTER.phone;
+$("#pArea").textContent = POSTER.area;
+$("#pTimes").innerHTML = POSTER.timings.map(t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;")).join("<br>");
+$("#pUrl").textContent = siteUrl.replace(/^https?:\/\//, "").replace(/\/$/, "");
+$("#pFssai").textContent = POSTER.fssai || "";
+document.title = "QR poster – " + POSTER.kitchen;
+
+/* QR: error-correction Q survives scuffs on lift walls and notice boards */
+try { const q = qrcode(0, "Q"); q.addData(siteUrl); q.make(); $("#qr").innerHTML = q.createSvgTag({ cellSize: 4, margin: 0, scalable: true }); }
+catch (e) { $("#qr").textContent = siteUrl; }
+
+/* size switch + fit-to-screen preview */
+const sheet = $("#sheet"), fit = $("#fit");
+function setSize(sz) {
+  sheet.classList.toggle("a5", sz === "a5");
+  document.querySelectorAll("[data-size]").forEach(b => b.classList.toggle("on", b.dataset.size === sz));
+  let st = $("#pageSize"); if (!st) { st = document.createElement("style"); st.id = "pageSize"; document.head.appendChild(st); }
+  st.textContent = "@page{size:" + (sz === "a5" ? "A5" : "A4") + ";margin:0}";
+  fitScreen();
+}
+function fitScreen() {
+  fit.style.zoom = 1;
+  const w = sheet.getBoundingClientRect().width, avail = Math.max(240, window.innerWidth - 24);
+  fit.style.zoom = Math.min(1, avail / w);
+}
+document.querySelectorAll("[data-size]").forEach(b => b.addEventListener("click", () => setSize(b.dataset.size)));
+$("#print").addEventListener("click", () => window.print());
+window.addEventListener("resize", fitScreen);
+setSize(qs.get("size") === "a5" ? "a5" : "a4");
+</script>
+</body>
+</html>

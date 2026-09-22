@@ -1,14 +1,30 @@
 <!DOCTYPE html>
+<!-- Jacob's Kitchen ordering platform - developed by Prithi Technologies (prithitechnologies@gmail.com) - v1.0.0 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Amma's Kitchen – Home food delivered in your apartment</title>
-<meta name="description" content="Fresh home-cooked meals delivered inside the apartment complex. Order on WhatsApp.">
+<title>Jacob's Kitchen – Home food delivered in your apartment</title>
+<meta name="description" content="Fresh home-cooked food delivered to your flat. Browse the menu, pay by UPI and order in a minute.">
 <meta name="theme-color" content="#1F4A2B">
+<meta name="author" content="Prithi Technologies">
+<meta name="application-name" content="Jacob's Kitchen">
+<link rel="canonical" href="https://cloudkitchen-5b259.web.app/">
+<!-- link preview (WhatsApp, Facebook, Telegram): edit these if the kitchen name or web address changes -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Amma's Kitchen – Home food delivered in your apartment">
-<meta property="og:description" content="Fresh home-cooked meals delivered inside the apartment complex. Order on WhatsApp.">
+<meta property="og:site_name" content="Jacob's Kitchen">
+<meta property="og:url" content="https://cloudkitchen-5b259.web.app/">
+<meta property="og:title" content="Jacob's Kitchen – Home food delivered in your apartment">
+<meta property="og:description" content="Fresh home-cooked food delivered to your flat. Browse the menu, pay by UPI and order in a minute.">
+<meta property="og:image" content="https://cloudkitchen-5b259.web.app/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Jacob's Kitchen – fresh home-cooked food delivered to your flat">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8D%9B%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -103,7 +119,21 @@ input:focus,select:focus,textarea:focus{border-color:var(--leaf)}
   .bar,.backdrop{display:none!important}
   .layout{padding-bottom:40px}
 }
-footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px}
+footer{color:var(--muted);font-size:.9rem}
+footer#foot{margin-top:30px;background:#fff;border-top:1px solid var(--line);text-align:left}
+.foot-in{max-width:1040px;margin:0 auto;padding:26px 20px 0}
+.foot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:22px}
+.foot-grid h4{margin:0 0 6px;font-family:var(--display);font-size:1.08rem;color:var(--leaf-deep)}
+.foot-grid p,.foot-grid ul{margin:0 0 5px;padding:0;list-style:none}
+.foot-grid li{margin-bottom:3px}
+.foot-grid a,.foot-bar a{color:var(--leaf-deep);font-weight:700}
+.foot-bar{max-width:1040px;margin:22px auto 0;padding:14px 20px 96px;border-top:1px dashed var(--line);text-align:center;font-size:.82rem;line-height:1.75}
+@media (min-width:860px){.foot-bar{padding-bottom:24px}}
+.sheet.wide{max-width:640px}
+.policy h3{margin:16px 0 4px;font-size:1rem;color:var(--leaf-deep)}
+.policy p,.policy li{font-size:.94rem;color:var(--ink);margin:0 0 6px}
+.policy ul{padding-left:20px;margin:0 0 6px}
+.policy .upd{color:var(--muted);font-size:.82rem;margin-top:14px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 /* accounts */
 .acct{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:.92rem;color:#DCE8DD}
@@ -131,10 +161,10 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
 .chkrow{display:flex;gap:8px;align-items:flex-start;font-weight:600;margin-top:10px}
 .chkrow input{width:20px;height:20px;margin-top:2px;flex:none}
 #proof{width:100%;margin-top:6px}
-.thumb{flex:none;width:84px;height:84px;border-radius:12px;overflow:hidden;background:#EAF1E8;display:flex;align-items:center;justify-content:center}
+.thumb{flex:none;width:84px;height:84px;border-radius:12px;overflow:hidden;background:#EEF1EC;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb .ph{font-size:2.3rem;line-height:1;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
-.ph.c0{background:#EAF1E8}.ph.c1{background:#FCEFD0}.ph.c2{background:#F8DDD3}.ph.c3{background:#E3ECF7}.ph.c4{background:#F1E5F5}.ph.c5{background:#E6F3F0}
+.thumb .ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#9AA69B}
+.thumb .ph svg{width:46%;height:46%}
 .item.sold .thumb{filter:grayscale(1)}
 .item .info{flex:1;min-width:0}
 @media (max-width:420px){.thumb{width:72px;height:72px}.thumb .ph{font-size:2rem}.act{min-width:92px}.item{gap:10px}}
@@ -260,6 +290,14 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
   </div>
 </div>
 
+<div class="modal" id="policyModal" hidden role="dialog" aria-modal="true" aria-labelledby="polTitle">
+  <div class="sheet wide">
+    <button type="button" class="x" data-close aria-label="Close">×</button>
+    <h2 id="polTitle"></h2>
+    <div class="policy" id="polBody"></div>
+  </div>
+</div>
+
 <div class="modal" id="ordersModal" hidden role="dialog" aria-modal="true" aria-labelledby="ordTitle">
   <div class="sheet">
     <button type="button" class="x" data-close aria-label="Close">×</button>
@@ -277,10 +315,14 @@ footer{text-align:center;color:var(--muted);font-size:.85rem;padding:0 20px 90px
    EDIT THIS SECTION – everything the owner needs to change
    ===================================================== */
 const CONFIG = {
-  kitchen: "Amma's Kitchen",
+  kitchen: "Jacob's Kitchen",
   tagline: "Fresh home-cooked food, made in small batches and delivered inside our apartment complex.",
   whatsapp: "919894596364",          // country code + number, no + or spaces
   upiId: "trgthirumal-2@okaxis",
+  siteUrl: "https://cloudkitchen-5b259.web.app/",   // your website address (used for search results and link previews)
+  fssai: "",                         // FSSAI licence / registration number: shown in the footer once you fill it in
+  serviceArea: "Delivering inside our apartment complex",
+  showPhone: true,                   // show the WhatsApp number in the footer
   allowCash: false,                  // false = customers pay by UPI first, then attach the screenshot; true = cash on delivery also allowed
   requireLogin: true,                // customers must sign in to place an order (needs Firebase; set false to allow guest orders)
   minOrder: 80,                      // ₹
@@ -311,6 +353,9 @@ const CONFIG = {
 
 const $ = s => document.querySelector(s);
 const rs = n => "₹" + n;
+/* Platform details (do not edit) */
+const APP = { name: "Prithi Technologies", email: "prithitechnologies@gmail.com", version: "1.0.0" };
+const POLICY_DATE = "20 September 2026";
 const KEY = { cart: "hk_cart", prof: "hk_profile", last: "hk_last" };
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -324,7 +369,6 @@ let stockSold = {}, lastDate = null;
 document.title = CONFIG.kitchen + " – Home food delivered in your apartment";
 $("#kName").textContent = CONFIG.kitchen;
 $("#kTag").textContent = CONFIG.tagline;
-$("#foot").textContent = CONFIG.kitchen + " · Home kitchen · Orders confirmed on WhatsApp";
 $("#facts").innerHTML =
   `<span>Minimum order <b>${rs(CONFIG.minOrder)}</b></span>` +
   (CONFIG.freeDeliveryAbove ? `<span>Free delivery above <b>${rs(CONFIG.freeDeliveryAbove)}</b></span>` : "") +
@@ -333,22 +377,12 @@ $("#facts").innerHTML =
 /* ---------- menu ---------- */
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const IMG_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
-const EMOJI = [
-  [/biryani|briyani|pulao|pulav/i, "🍛"], [/meal|thali|lunch|combo/i, "🍱"],
-  [/idli|idly|dosa|dosai|uttapam|pongal|upma/i, "🥞"], [/vada|bonda|bajji|pakoda|samosa|cutlet|puff/i, "🥟"],
-  [/chapati|chapathi|roti|paratha|parotta|naan|puri|poori/i, "🥙"], [/chicken/i, "🍗"], [/fish|prawn|meen/i, "🐟"],
-  [/egg|omelette/i, "🥚"], [/mutton|lamb|keema/i, "🍖"], [/rice|sadam/i, "🍚"],
-  [/curry|kurma|kuzhambu|sambar|gravy|dal|dhal/i, "🍲"], [/payasam|kheer|kesari|halwa|sweet|laddu|jalebi|gulab|mysore/i, "🍮"],
-  [/cake|brownie/i, "🍰"], [/ice ?cream|kulfi/i, "🍨"], [/tea|chai|coffee/i, "☕"],
-  [/juice|lassi|buttermilk|moru|milkshake|drink|soda/i, "🥤"], [/salad/i, "🥗"], [/curd|yogurt|yoghurt|raita/i, "🥛"]
-];
-function emojiFor(m) {
-  for (const text of [m.name || "", m.cat || ""]) for (const [re, e] of EMOJI) if (re.test(text)) return e;
-  return "🍽️";
-}
+/* Plain line-art placeholder (a plate + fork/knife) shown until the kitchen uploads a real
+   photo of the dish in Admin > Menu. Intentionally muted, not a colourful cartoon. */
+const PLATE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7.6"/><circle cx="12" cy="12" r="3.4"/><path d="M4 3v4M4 3v6M4 3c-1.1 0-1.1 3 0 3M20 3v18M20 3c-1.6 0-1.6 6 0 6"/></svg>';
 function thumb(m) {
   if (m.img && IMG_OK.test(m.img)) return `<img src="${m.img}" alt="" loading="lazy" decoding="async">`;
-  return `<span class="ph c${[...String(m.name || "")].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 6}" aria-hidden="true">${emojiFor(m)}</span>`;
+  return `<span class="ph" aria-hidden="true">${PLATE_SVG}</span>`;
 }
 function applyMenu(items) {
   menuShown = true;
@@ -808,6 +842,59 @@ $("#ordersBody").addEventListener("click", e => {
   if (window.innerWidth < 860 && Object.keys(cart).length) openCart(true);
   if (skipped) alert("Some items are no longer available and were skipped.");
 });
+
+/* ---------- footer, policies, search data ---------- */
+function phoneDisplay() {
+  const n = String(CONFIG.whatsapp || "");
+  return /^91\d{10}$/.test(n) ? `+91 ${n.slice(2, 7)} ${n.slice(7)}` : "+" + n;
+}
+function fmt12(t) { const [h, m] = String(t).split(":").map(Number); return ((h % 12) || 12) + ":" + String(m).padStart(2, "0") + " " + (h < 12 ? "AM" : "PM"); }
+function renderFooter() {
+  const K = esc(CONFIG.kitchen);
+  $("#foot").innerHTML = `
+  <div class="foot-in"><div class="foot-grid">
+    <div><h4>${K}</h4><p>${esc(CONFIG.tagline)}</p>${CONFIG.fssai ? `<p><b>FSSAI Lic. No.</b> ${esc(CONFIG.fssai)}</p>` : ""}</div>
+    <div><h4>Contact</h4><p><a href="https://wa.me/${esc(CONFIG.whatsapp)}" target="_blank" rel="noopener">Chat on WhatsApp</a></p>${CONFIG.showPhone ? `<p>${esc(phoneDisplay())}</p>` : ""}<p>${esc(CONFIG.serviceArea)}</p></div>
+    <div><h4>Order timings</h4><ul>${CONFIG.slots.map(x => `<li>${esc(x.label)} · order by ${fmt12(x.cutoff)}</li>`).join("")}</ul><p>${CONFIG.allowCash ? "Pay by UPI or cash" : "Payment: UPI, before you order"}</p></div>
+    <div><h4>Information</h4><ul>
+      <li><a href="#" data-policy="terms">Terms of service</a></li>
+      <li><a href="#" data-policy="privacy">Privacy policy</a></li>
+      <li><a href="#" data-policy="refund">Refund &amp; cancellation</a></li></ul></div>
+  </div></div>
+  <div class="foot-bar">© ${new Date().getFullYear()} ${K}. All rights reserved. · <a href="mailto:${APP.email}?subject=${encodeURIComponent(CONFIG.kitchen + " website problem")}">Report a website problem</a> · v${APP.version}<br>
+    Software developed &amp; powered by <b>${APP.name}</b> · <a href="mailto:${APP.email}">${APP.email}</a></div>`;
+}
+function policyDoc(kind) {
+  const K = esc(CONFIG.kitchen), wa = `WhatsApp (${esc(phoneDisplay())})`, upd = `<p class="upd">Last updated ${POLICY_DATE}. ${K} may update this page from time to time.</p>`;
+  if (kind === "privacy") return { title: "Privacy policy", html: `
+    <h3>What we collect</h3><ul><li>Your name, mobile number, email address and flat / block, so we can deliver your order.</li>
+    <li>Your order details and delivery slot.</li><li>The payment screenshot and UTR number you attach, so we can confirm your payment.</li>
+    <li>If you sign in with Google, your name and email from your Google account.</li></ul>
+    <h3>How we use it</h3><p>Only to prepare, deliver and confirm your orders, to contact you about them, and to show your order history. We do not sell your data or use it for advertising.</p>
+    <h3>Where it is stored</h3><p>In Google Firebase (Google Cloud) services, protected by access rules. Only ${K} can see order details. Payments happen in your own UPI app: we never see your bank or card passwords.</p>
+    <h3>On your device</h3><p>This website saves your cart, address and sign-in on your device so you do not have to type them again. Sign out to clear the saved address.</p>
+    <h3>Your choices</h3><p>You can ask us to correct or delete your account and order data by contacting us on ${wa}. We may keep basic order and payment records where needed for accounts and legal reasons.</p>${upd}` };
+  if (kind === "refund") return { title: "Refund & cancellation", html: `
+    <h3>Cancelling an order</h3><p>You can cancel before ${K} confirms your order and you will get a full refund. Once cooking has started, an order can usually not be cancelled.</p>
+    <h3>If we cannot deliver</h3><p>If an item runs out, the kitchen is closed or we cannot deliver in your slot, we will tell you on WhatsApp and refund the full amount to the UPI account you paid from, normally within one working day.</p>
+    <h3>Problem with your food</h3><p>If an item is missing, wrong or not fresh, message us on ${wa} within 2 hours of delivery with your order number and a photo. We will replace the item or refund it.</p>
+    <h3>How to ask</h3><p>Send your order number on ${wa}.</p>${upd}` };
+  return { title: "Terms of service", html: `
+    <h3>Ordering</h3><p>Orders are placed on this website and are confirmed only after ${K} verifies your payment. We may decline or cancel an order (for example if an item is finished or a slot is full) and will refund any payment received.</p>
+    <h3>Prices and payment</h3><p>Prices are in Indian rupees. Payment is made by UPI before the order is placed. The delivery fee, if any, is shown before you pay.</p>
+    <h3>Delivery</h3><p>${esc(CONFIG.serviceArea)}. Please be reachable on your phone at the delivery time. Times are estimates; we will message you on WhatsApp if there is a delay.</p>
+    <h3>Food and allergies</h3><p>Food is freshly prepared in a home kitchen and may contain common allergens such as nuts, dairy, gluten, soy or eggs. Tell us about allergies in the note when you order. We cannot guarantee an allergen-free kitchen.</p>
+    <h3>Your account</h3><p>Keep your sign-in details private. Please give correct name, phone number and address.</p>
+    <h3>Contact</h3><p>${wa}.</p>${upd}` };
+}
+function openPolicy(kind) { const d = policyDoc(kind); $("#polTitle").textContent = d.title; $("#polBody").innerHTML = d.html; showModal("policyModal", true); }
+$("#foot").addEventListener("click", e => { const a = e.target.closest("[data-policy]"); if (a) { e.preventDefault(); openPolicy(a.dataset.policy); } });
+renderFooter();
+(function seoData() {
+  const url = CONFIG.siteUrl || location.origin + "/";
+  const ld = { "@context": "https://schema.org", "@type": "FoodEstablishment", name: CONFIG.kitchen, url, image: url + "og-image.png", description: CONFIG.tagline, telephone: "+" + CONFIG.whatsapp, paymentAccepted: "UPI", currenciesAccepted: "INR" };
+  const el = document.createElement("script"); el.type = "application/ld+json"; el.textContent = JSON.stringify(ld); document.head.appendChild(el);
+})();
 
 /* ---------- menu source: Firestore (admin-editable) or CONFIG.menu fallback ---------- */
 let menuReady = false;

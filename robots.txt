@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin.html
+Disallow: /poster.html
+
+Sitemap: https://cloudkitchen-5b259.web.app/sitemap.xml

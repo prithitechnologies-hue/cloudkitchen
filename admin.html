@@ -1,9 +1,11 @@
 <!DOCTYPE html>
+<!-- Jacob's Kitchen ordering platform - developed by Prithi Technologies (prithitechnologies@gmail.com) - v1.0.0 -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta name="author" content="Prithi Technologies">
 <meta name="theme-color" content="#1F4A2B">
 <title>Kitchen admin</title>
 <style>
@@ -61,9 +63,10 @@ code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
 .sum{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-weight:700}
 @media print{body{background:#fff}.top,.msg,.tabs,.noprint,.chips{display:none!important}.card{border:0;padding:0;margin-top:8px}main{max-width:none;padding:0}}
 [hidden]{display:none!important}
-.pv{width:84px;height:84px;border-radius:12px;background:#EAF1E8;display:flex;align-items:center;justify-content:center;font-size:2.2rem;overflow:hidden;border:1px solid var(--line);flex:none}
+.pv{width:84px;height:84px;border-radius:12px;background:#EEF1EC;display:flex;align-items:center;justify-content:center;color:#9AA69B;overflow:hidden;border:1px solid var(--line);flex:none}
+.pv svg,.mini svg{width:44%;height:44%}
 .pv img,.mini img{width:100%;height:100%;object-fit:cover;display:block}
-.mini{width:46px;height:46px;border-radius:9px;background:#EAF1E8;display:flex;align-items:center;justify-content:center;font-size:1.5rem;overflow:hidden;flex:none;border:1px solid var(--line)}
+.mini{width:46px;height:46px;border-radius:9px;background:#EEF1EC;display:flex;align-items:center;justify-content:center;color:#9AA69B;overflow:hidden;flex:none;border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -162,7 +165,7 @@ code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
       </div>
       <label>Photo</label>
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <div id="photoPrev" class="pv">🍽️</div>
+        <div id="photoPrev" class="pv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7.6"/><circle cx="12" cy="12" r="3.4"/><path d="M4 3v4M4 3v6M4 3c-1.1 0-1.1 3 0 3M20 3v18M20 3c-1.6 0-1.6 6 0 6"/></svg></div>
         <div>
           <input type="file" id="photo" accept="image/*" style="width:auto;max-width:100%">
           <div class="actions" style="margin-top:8px"><button type="button" id="photoRemove" hidden>Remove photo</button></div>
@@ -189,6 +192,9 @@ code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
   </div>
 </section>
 
+<footer class="noprint" style="text-align:center;color:var(--muted);font-size:.8rem;line-height:1.7;margin-top:30px">
+  Kitchen Admin v1.0.0<br>Software developed &amp; powered by <b>Prithi Technologies</b> · <a href="mailto:prithitechnologies@gmail.com">prithitechnologies@gmail.com</a>
+</footer>
 </main>
 
 <script src="firebase-config.js"></script>
@@ -448,21 +454,14 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
 
   /* ---- item photos: shrunk to a small square JPEG and stored inside the menu item ---- */
   const IMG_OK = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
-  const EMOJI = [
-    [/biryani|briyani|pulao|pulav/i, "🍛"], [/meal|thali|lunch|combo/i, "🍱"], [/idli|idly|dosa|dosai|uttapam|pongal|upma/i, "🥞"],
-    [/vada|bonda|bajji|pakoda|samosa|cutlet|puff/i, "🥟"], [/chapati|chapathi|roti|paratha|parotta|naan|puri|poori/i, "🥙"],
-    [/chicken/i, "🍗"], [/fish|prawn|meen/i, "🐟"], [/egg|omelette/i, "🥚"], [/mutton|lamb|keema/i, "🍖"], [/rice|sadam/i, "🍚"],
-    [/curry|kurma|kuzhambu|sambar|gravy|dal|dhal/i, "🍲"], [/payasam|kheer|kesari|halwa|sweet|laddu|jalebi|gulab|mysore/i, "🍮"],
-    [/cake|brownie/i, "🍰"], [/ice ?cream|kulfi/i, "🍨"], [/tea|chai|coffee/i, "☕"],
-    [/juice|lassi|buttermilk|moru|milkshake|drink|soda/i, "🥤"], [/salad/i, "🥗"], [/curd|yogurt|yoghurt|raita/i, "🥛"]
-  ];
-  const emojiFor = i => { for (const t of [i.name || "", i.cat || ""]) for (const [re, e] of EMOJI) if (re.test(t)) return e; return "🍽️"; };
-  const miniPic = i => i.img && IMG_OK.test(i.img) ? `<img src="${i.img}" alt="">` : emojiFor(i);
+  /* Plain line-art placeholder shown until a real photo is uploaded - deliberately muted, not a cartoon icon. */
+  const PLATE_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7.6"/><circle cx="12" cy="12" r="3.4"/><path d="M4 3v4M4 3v6M4 3c-1.1 0-1.1 3 0 3M20 3v18M20 3c-1.6 0-1.6 6 0 6"/></svg>';
+  const miniPic = i => i.img && IMG_OK.test(i.img) ? `<img src="${i.img}" alt="">` : PLATE_SVG;
   let formImg = null;
   function setPreview(src) {
     const pv = $("#photoPrev"), ok = !!(src && IMG_OK.test(src));
-    pv.textContent = "";
-    if (ok) { const im = document.createElement("img"); im.alt = ""; im.src = src; pv.appendChild(im); } else pv.textContent = "🍽️";
+    pv.innerHTML = "";
+    if (ok) { const im = document.createElement("img"); im.alt = ""; im.src = src; pv.appendChild(im); } else pv.innerHTML = PLATE_SVG;
     $("#photoRemove").hidden = !ok;
   }
   function squareJpeg(file) {

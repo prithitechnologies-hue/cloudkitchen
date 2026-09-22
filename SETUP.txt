@@ -1,7 +1,13 @@
 KITCHEN SITE: customer login + admin (Firebase, free Spark plan)
 ================================================================
 Files
-  qrcode.js          QR generator (MIT, Kazuhiko Arase) used for the UPI QR
+  qrcode.js          QR generator (MIT, Kazuhiko Arase) used for UPI QR codes and the poster
+  poster.html        printable QR poster for lifts / notice boards (A4 or A5) - open it directly
+  404.html           shown for a mistyped/old link
+  manifest.webmanifest, icon-192.png, icon-512.png, apple-touch-icon.png  "Add to Home Screen" icons
+  og-image.png       the picture shown when the link is pasted into WhatsApp/Facebook/Telegram
+  robots.txt, sitemap.xml   basic search-engine files
+  share/             poster-a4.png, poster-a4.pdf, poster-a5.png, poster-a5.pdf, whatsapp-message.txt
   index.html         customer page: browse menu, sign in, place order, My orders
   admin.html         owner page: Orders (with status), Menu (add/edit/sold-out)
   firebase-config.js paste your Firebase config here
@@ -71,7 +77,18 @@ NEW IN THE PREVIOUS VERSION
     Limits only work when customers are signed in (the count is saved with the order).
     Guest orders / Firebase offline do not count against the limit.
 
+RENAMED TO "JACOB'S KITCHEN"
+  The kitchen name is changed everywhere: page title, footer, poster, WhatsApp preview
+  image, app icon, "Add to Home Screen" name, and the sample WhatsApp announcement text.
+  To rename again later: edit CONFIG.kitchen in index.html (site) and the POSTER block in
+  poster.html, then regenerate icon-192.png / icon-512.png / apple-touch-icon.png /
+  og-image.png / share/poster-*.png / share/poster-*.pdf (ask Claude, or re-run the build
+  script used to make this zip).
+
 ITEM PHOTOS
+  Photos must be real photos of the actual dish, taken by the kitchen, not stock or
+  AI-generated food art - customers trust a real photo of what they will actually get.
+  Until a photo is uploaded, the item shows a plain grey plate outline, not a cartoon icon.
   Admin > Menu > Add/Edit item > Photo: pick a picture (camera or gallery). It is cropped to a
   small square and saved inside the menu item (no paid storage needed). Items without a photo
   show a food icon automatically, so every item has a picture. "Remove photo" goes back to the icon.
@@ -84,6 +101,35 @@ ADMIN LOGIN: REMEMBER ME
   "Forgot password?" emails a reset link.
   This zip already contains the real firebase-config.js, .firebaserc and admin ID in
   firestore.rules for project cloudkitchen-5b259.
+
+SHARE KIT (poster, link preview, "Add to Home Screen")
+  share/poster-a4.pdf and poster-a5.pdf: print-ready, put them up in lifts and on notice
+    boards. share/poster-a4.png / poster-a5.png: the same poster as an image, for printing
+    at a shop or sharing on WhatsApp Status. Regenerate after changing CONFIG in index.html
+    or poster.html's own POSTER block (kitchen name, phone, timings) - see below.
+  poster.html: open it in a browser to preview, change size (A4 / A5) or print your own copy
+    with today's numbers; edit the POSTER block near the bottom of the file first.
+  og-image.png: shown automatically as the preview card when the site link is pasted into
+    WhatsApp, Facebook or Telegram. Regenerate it (see below) if the kitchen name changes.
+  share/whatsapp-message.txt: ready-to-paste announcement for the apartment WhatsApp group,
+    in English and Tamil. Edit the name/number/timings, then paste it and attach poster-a4.png.
+  "Add to Home Screen": on a customer's phone, browser menu > "Add to Home Screen" now shows
+    the kitchen's own icon and name instead of a generic globe.
+  To regenerate the PNG/PDF posters and the WhatsApp preview image after changing details,
+    ask Claude, or re-run the same build script used to create this zip (Python + Playwright).
+
+PROFESSIONAL DETAILS
+  Footer (bottom of the site): kitchen name, contact, order timings, and three policy pages
+    (Terms, Privacy, Refund & cancellation) written in plain language - open them from the
+    footer. FSSAI number: fill in CONFIG.fssai in index.html once you have it; it then shows
+    in the footer and disappears again if you clear it.
+  Every page (site, admin, poster, 404) credits: "Software developed & powered by Prithi
+    Technologies - prithitechnologies@gmail.com", plus a version number (v1.0.0) and a
+    "Report a website problem" link that opens an email.
+  Search engines / previews: page title, description, a WhatsApp/Facebook preview image, and
+    basic structured data (FoodEstablishment) so search engines understand what the page is.
+  Security headers (firebase.json): stop the site being framed on another page and stop
+    browsers guessing file types - standard practice, invisible to visitors.
 
 VOICE ALERTS (admin page)
   Admin > "Voice alerts": tap once to turn on (browsers need a tap), pick English or Tamil,

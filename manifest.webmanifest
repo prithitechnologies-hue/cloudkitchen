@@ -1,0 +1,15 @@
+{
+  "name": "Jacob's Kitchen",
+  "short_name": "Jacob's Kitchen",
+  "description": "Fresh home-cooked food delivered to your flat. Browse the menu, pay by UPI and order in a minute.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F7F1",
+  "theme_color": "#1F4A2B",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
