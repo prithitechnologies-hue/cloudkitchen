@@ -169,8 +169,6 @@ footer#foot{margin-top:30px;background:#fff;border-top:1px solid var(--line);tex
 .item .info{flex:1;min-width:0}
 @media (max-width:420px){.thumb{width:72px;height:72px}.thumb .ph{font-size:2rem}.act{min-width:92px}.item{gap:10px}}
 @media (max-width:340px){.thumb{width:58px;height:58px}.thumb .ph{font-size:1.7rem}.act{min-width:84px}}
-body.store-closed .add,body.store-closed [data-act="inc"],body.store-closed [data-act="dec"]{opacity:.45;pointer-events:none}
-.closedcart{background:#F8DDD7;border:1px solid #E3A99C;color:#5A1A0D;border-radius:12px;padding:14px;font-weight:600;text-align:center;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -197,7 +195,6 @@ body.store-closed .add,body.store-closed [data-act="inc"],body.store-closed [dat
     <h2>Your order</h2>
     <div id="cartBody"></div>
     <p class="err" id="stockNote" role="alert"></p>
-    <div class="closedcart" id="closedCart" hidden></div>
 
     <form id="form" novalidate>
       <label for="name">Your name</label>
@@ -320,7 +317,7 @@ body.store-closed .add,body.store-closed [data-act="inc"],body.store-closed [dat
 const CONFIG = {
   kitchen: "Jacob's Kitchen",
   tagline: "Fresh home-cooked food, made in small batches and delivered inside our apartment complex.",
-  whatsapp: "919940032788",          // country code + number, no + or spaces
+  whatsapp: "919894596364",          // country code + number, no + or spaces
   upiId: "trgthirumal-2@okaxis",
   siteUrl: "https://cloudkitchen-5b259.web.app/",   // your website address (used for search results and link previews)
   fssai: "",                         // FSSAI licence / registration number: shown in the footer once you fill it in
@@ -367,7 +364,6 @@ let cart = load(KEY.cart, {});
 let byId = {};
 let user = null, fbReady = false, menuShown = false;
 let stockSold = {}, lastDate = null;
-let storeClosed = false, storeMsg = "";
 
 /* ---------- header ---------- */
 document.title = CONFIG.kitchen + " – Home food delivered in your apartment";
@@ -456,7 +452,6 @@ function syncItem(id) {
   el.querySelector(".left").textContent = !out && Number.isFinite(left) && left <= 5 ? `Only ${left} left` : "";
 }
 function change(id, d) {
-  if (storeClosed) return;
   const q = Math.max(0, Math.min(maxQty(id), (cart[id] || 0) + d));
   if (q) cart[id] = q; else delete cart[id];
   save(KEY.cart, cart);
@@ -493,10 +488,7 @@ function refreshSlots() {
   if (slots.some(s => s.label === prev)) sel.value = prev;
   const sd = selDate(); if (lastDate !== null && sd !== lastDate) { lastDate = sd; stockRefresh(); } lastDate = sd;
   const st = $("#status"), first = slots[0];
-  if (storeClosed) {
-    st.className = "status closed";
-    st.textContent = storeMsg || "We're closed right now — back soon!";
-  } else if (first && first.day === 0) {
+  if (first && first.day === 0) {
     st.className = "status";
     st.textContent = `Open · order before ${first.cutoff.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} for ${first.name.toLowerCase()}`;
   } else {
@@ -504,12 +496,6 @@ function refreshSlots() {
     st.textContent = "Today's orders are closed · you can book for tomorrow";
   }
 }
-function applyStoreStatus() {
-  document.body.classList.toggle("store-closed", storeClosed);
-  refreshSlots();
-  if (menuShown) { Object.keys(byId).forEach(syncItem); renderCart(); }
-}
-window.setStoreStatus = s => { storeClosed = !!(s && s.closed); storeMsg = (s && s.message || "").trim(); applyStoreStatus(); };
 refreshSlots(); setInterval(refreshSlots, 60000);
 $("#slot").addEventListener("change", () => { lastDate = selDate(); stockRefresh(); });
 
@@ -544,10 +530,8 @@ function renderCart() {
       </div>`;
   }
   $("#cartBody").innerHTML = html;
-  $("#form").hidden = !ids.length || needLogin() || storeClosed;
-  $("#loginPrompt").hidden = !ids.length || !needLogin() || storeClosed;
-  $("#closedCart").hidden = !storeClosed || !ids.length;
-  if (storeClosed) $("#closedCart").textContent = storeMsg || "Sorry, we are not taking orders right now.";
+  $("#form").hidden = !ids.length || needLogin();
+  $("#loginPrompt").hidden = !ids.length || !needLogin();
   if (ids.length) $("#done").hidden = true;
   $("#bar").hidden = !ids.length || window.innerWidth >= 860;
   $("#barText").textContent = `${n} item${n === 1 ? "" : "s"} · ${rs(t.total)}`;
@@ -636,7 +620,6 @@ if (prof.flat) $("#flat").value = prof.flat;
 function setErr(id, msg) { $("#e-" + id).textContent = msg || ""; return !msg; }
 $("#form").addEventListener("submit", async e => {
   e.preventDefault();
-  if (storeClosed) { alert(storeMsg || "Sorry, we are not taking orders right now."); return; }
   if (needLogin()) { openAuth("in"); return; }
   if (CONFIG.whatsapp === "919999999999" || !/^\d{11,15}$/.test(CONFIG.whatsapp)) { alert("Setup incomplete: set a valid WhatsApp number in CONFIG (e.g. 919876543210)."); return; }
   if (payMode() === "UPI" && /yourname@/.test(CONFIG.upiId)) { alert("Setup incomplete: set your real UPI ID in CONFIG."); return; }
@@ -937,13 +920,6 @@ if (window.__fbOn) {
     F = await import(base + "firebase-firestore.js");
     app = initializeApp(window.FIREBASE_CONFIG);
     db = F.getFirestore(app);
-    const rk = window.RECAPTCHA_SITE_KEY;
-    if (rk && !/^YOUR_/.test(rk)) {
-      try {
-        const AC = await import(base + "firebase-app-check.js");
-        AC.initializeAppCheck(app, { provider: new AC.ReCaptchaV3Provider(rk), isTokenAutoRefreshEnabled: true });
-      } catch (e) { /* App Check not reachable - site still works, just without this extra check */ }
-    }
     F.onSnapshot(F.collection(db, "menu"), snap => {
       const items = snap.docs.map(d => {
         const x = d.data();
@@ -957,7 +933,6 @@ if (window.__fbOn) {
       snap.docs.forEach(d => { const x = d.data(); (m[x.date] = m[x.date] || {})[x.item] = Number(x.sold) || 0; });
       window.setStock(m);
     }, () => {});
-    F.onSnapshot(F.doc(db, "settings", "store"), snap => { window.setStoreStatus(snap.exists() ? snap.data() : null); }, () => {});
   } catch (e) { window.menuFallback(); }
   /* 2) customer login + orders (if this fails, ordering stays open via WhatsApp) */
   try {

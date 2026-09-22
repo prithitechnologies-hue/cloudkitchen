@@ -24,7 +24,6 @@ input:focus,select:focus{outline:none;border-color:var(--leaf)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 button{font:inherit;cursor:pointer;border-radius:10px;border:1.5px solid var(--leaf);background:transparent;color:var(--leaf-deep);padding:9px 14px;font-weight:700}
 button.pri{background:var(--leaf);color:#fff;border-color:var(--leaf)}
-button.danger{background:var(--chilli);color:#fff;border-color:var(--chilli)}
 button.del{border-color:var(--chilli);color:var(--chilli)}
 button:disabled{opacity:.5;cursor:not-allowed}
 .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
@@ -110,16 +109,6 @@ code{background:#EEF2EA;padding:2px 6px;border-radius:6px;word-break:break-all}
   </div>
 
   <div class="msg" id="msg" hidden></div>
-
-  <div class="card noprint" id="storeCard">
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between">
-      <div><b id="storeState">Store: Open</b><div class="muted" id="storeSub" style="font-size:.9rem">Customers can order normally.</div></div>
-      <button type="button" id="storeToggle">Close ordering</button>
-    </div>
-    <label for="storeMsg" style="margin-top:12px">Message shown to customers while closed</label>
-    <input type="text" id="storeMsg" maxlength="140" placeholder="e.g. Back tomorrow at 11 AM — closed for Diwali">
-    <div class="actions"><button type="button" class="pri" id="storeSave" disabled>Save message</button></div>
-  </div>
 
   <div class="card noprint" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
     <button type="button" id="voiceBtn">🔊 Voice alerts: Off</button>
@@ -238,23 +227,15 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
   const { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, setPersistence, browserLocalPersistence, browserSessionPersistence, sendPasswordResetEmail } = A;
   const { getFirestore, collection, query, orderBy, limit, where, onSnapshot, doc, getDoc, setDoc, updateDoc, deleteDoc, writeBatch } = F;
   const app = initializeApp(cfg), auth = getAuth(app), db = getFirestore(app);
-  const rk = window.RECAPTCHA_SITE_KEY;
-  if (rk && !/^YOUR_/.test(rk)) {
-    try {
-      const AC = await import(base + "firebase-app-check.js");
-      AC.initializeAppCheck(app, { provider: new AC.ReCaptchaV3Provider(rk), isTokenAutoRefreshEnabled: true });
-    } catch (e) { /* App Check not reachable - admin page still works without it */ }
-  }
 
-  let items = [], orders = [], stock = {}, filter = "active", unsubMenu = null, unsubOrders = null, unsubStock = null, unsubStore = null, msgTimer, seen = null;
-  let storeState = { closed: false, message: "" };
+  let items = [], orders = [], stock = {}, filter = "active", unsubMenu = null, unsubOrders = null, unsubStock = null, msgTimer, seen = null;
 
   const flash = (t, err) => {
     const m = $("#msg"); m.textContent = t; m.className = "msg" + (err ? " err" : ""); m.hidden = false;
     clearTimeout(msgTimer); msgTimer = setTimeout(() => m.hidden = true, err ? 7000 : 2500);
   };
   const fail = e => flash(e && e.code === "permission-denied" ? "This account is not allowed to do that." : "Something went wrong. Check your internet and try again.", true);
-  const stop = () => { if (unsubMenu) unsubMenu(); if (unsubOrders) unsubOrders(); if (unsubStock) unsubStock(); unsubMenu = unsubOrders = unsubStock = unsubStore = null; seen = null; };
+  const stop = () => { if (unsubMenu) unsubMenu(); if (unsubOrders) unsubOrders(); if (unsubStock) unsubStock(); unsubMenu = unsubOrders = unsubStock = null; seen = null; };
 
   /* ---- voice alerts (browser text-to-speech) ---- */
   const voice = { on: false, lang: "en" };
@@ -321,7 +302,7 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
     unsubOrders = onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc"), limit(300)), snap => {
       orders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       announceChanges(orders);
-      if (first) { first = false; $("#panel").hidden = false; $("#cookDate").value = dayKey(0); startMenu(); startStore(); }
+      if (first) { first = false; $("#panel").hidden = false; $("#cookDate").value = dayKey(0); startMenu(); }
       renderOrders(); renderCook();
     }, err => {
       if (err && err.code === "permission-denied") { $("#uid").textContent = user.uid; $("#denied").hidden = false; }
@@ -428,30 +409,6 @@ if (!cfg || !cfg.apiKey || /^YOUR/.test(cfg.apiKey)) {
     try { await updateDoc(ref, paidTog ? { paid: el.checked } : { status: el.value }); flash(paidTog ? (el.checked ? "Marked paid" : "Marked unpaid") : "Status updated"); }
     catch (x) { fail(x); renderOrders(); }
   });
-
-  /* ---- store open/closed ---- */
-  function startStore() {
-    if (unsubStore) return;
-    unsubStore = onSnapshot(doc(db, "settings", "store"), snap => {
-      storeState = snap.exists() ? { closed: !!snap.data().closed, message: snap.data().message || "" } : { closed: false, message: "" };
-      renderStore();
-    }, fail);
-  }
-  function renderStore() {
-    const on = storeState.closed;
-    $("#storeState").textContent = "Store: " + (on ? "Closed" : "Open");
-    $("#storeSub").textContent = on ? "Customers see the closed message below and cannot place orders." : "Customers can order normally.";
-    $("#storeToggle").textContent = on ? "Reopen ordering" : "Close ordering";
-    $("#storeToggle").className = on ? "" : "danger";
-    if (document.activeElement !== $("#storeMsg")) $("#storeMsg").value = storeState.message;
-  }
-  async function saveStore(next) {
-    try { await setDoc(doc(db, "settings", "store"), next); flash(next.closed ? "Ordering closed for customers" : "Ordering reopened"); }
-    catch (x) { fail(x); }
-  }
-  $("#storeToggle").addEventListener("click", () => saveStore({ closed: !storeState.closed, message: $("#storeMsg").value.trim() }));
-  $("#storeMsg").addEventListener("input", () => $("#storeSave").disabled = $("#storeMsg").value.trim() === storeState.message);
-  $("#storeSave").addEventListener("click", () => { saveStore({ closed: storeState.closed, message: $("#storeMsg").value.trim() }); $("#storeSave").disabled = true; });
 
   /* ---- cook sheet ---- */
   const ymd = d => d.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });

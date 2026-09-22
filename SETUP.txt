@@ -77,34 +77,6 @@ NEW IN THE PREVIOUS VERSION
     Limits only work when customers are signed in (the count is saved with the order).
     Guest orders / Firebase offline do not count against the limit.
 
-OPTIONAL: FIREBASE APP CHECK (blocks bots/scripts, free)
-  Firestore rules already stop customers from reading each other's orders, editing prices,
-  forging a "paid" order, or overwriting the menu. App Check adds one more layer: it blocks
-  scripted / automated traffic (bots) from creating fake accounts or spamming fake orders,
-  which rules alone cannot fully stop on a link anyone can open. To turn it on (free, no
-  Blaze plan needed):
-    1. Firebase console > Build > App Check > "Register" your Web app > choose reCAPTCHA v3
-       > follow the prompt to create a site key for this domain.
-    2. Paste that site key into firebase-config.js (RECAPTCHA_SITE_KEY, near the bottom).
-    3. Deploy hosting.
-    4. Firebase console > App Check > APIs tab > Cloud Firestore > set to "Enforce".
-  Until step 1-2 are done, the site works exactly as before (this is a pure add-on, not a
-  requirement) - it silently does nothing until a real site key is added.
-
-OPEN / CLOSED SWITCH (admin page)
-  Admin > the card right above Voice alerts shows "Store: Open" or "Store: Closed".
-  - Type a message in "Message shown to customers while closed" (e.g. "Back tomorrow
-    at 11 AM - closed for Diwali") and tap "Save message" any time, whether open or closed.
-  - Tap "Close ordering" to stop taking orders immediately, on every device, in real time.
-    Customers see your message at the top of the site and in their cart instead of the
-    order form; the Add buttons on menu items are disabled. They can still browse the menu.
-  - Tap "Reopen ordering" to go back to normal. The message is kept for next time until
-    you change it.
-  - This needs Firebase to be working (see the setup steps above) - without it there is
-    no way to flip the switch remotely, so plan the one-time setup before relying on this.
-  - The admin page itself (Orders, Cook sheet, Menu) keeps working normally while closed,
-    so you can still manage existing orders and edit the menu.
-
 RENAMED TO "JACOB'S KITCHEN"
   The kitchen name is changed everywhere: page title, footer, poster, WhatsApp preview
   image, app icon, "Add to Home Screen" name, and the sample WhatsApp announcement text.
