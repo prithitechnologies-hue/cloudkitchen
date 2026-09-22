@@ -127,6 +127,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Store open/closed switch (single doc, id "store"): anyone can read, only admin can write.
+    function validStoreDoc(d) {
+      return d.keys().hasOnly(['closed','message'])
+          && d.closed is bool
+          && d.message is string && d.message.size() <= 140;
+    }
+    match /settings/{id} {
+      allow read: if true;
+      allow create, update: if isAdmin() && id == 'store' && validStoreDoc(request.resource.data);
+      allow delete: if false;
+    }
+
     // Customer profile (saved name / phone / block / flat): only that customer
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
